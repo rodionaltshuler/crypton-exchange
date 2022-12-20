@@ -1,36 +1,36 @@
-struct Order {
-    id: u64,
-    order_type: OrderType,
-    qty: f64,
-    price: f64,
+pub struct Order {
+    pub id: u64,
+    pub order_type: OrderType,
+    pub qty: f64,
+    pub price: f64,
 }
 
-enum OrderType {
+pub enum OrderType {
     LimitBuy,
     LimitSell,
 }
 
-struct OrderBook {
+pub struct OrderBook {
     bid: Vec<Order>,
     ask: Vec<Order>
 }
 
 impl OrderBook {
 
-    fn new() -> OrderBook {
+    pub fn new() -> OrderBook {
         OrderBook {
             ask: vec!(),
             bid: vec!()
         }
     }
 
-    fn submit(&mut self, order: Order) -> Vec<OrderMatchResult> {
+    pub fn submit(&mut self, order: Order) -> Vec<OrderMatchResult> {
         //TODO implement
         return vec!()
     }
 }
 
-struct OrderMatchResult<'a> {
+pub struct OrderMatchResult<'a> {
     id: u64,
     order: &'a Order,
     qty_filled: f64
