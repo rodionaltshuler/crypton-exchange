@@ -1,5 +1,5 @@
 [package]
-name = "crypton-exchange"
+name = "order-book"
 version = "0.1.0"
 edition = "2021"
 
