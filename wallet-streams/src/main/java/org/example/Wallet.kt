@@ -1,6 +1,6 @@
 package org.example
 
-data class Wallet(val walletId: String, val assets: Map<String, Asset>) {
+data class Wallet(val walletId: String, val assets: Map<String, Asset>, val txCount : Long = 0) {
     companion object {
         @JvmStatic
         fun withAsset(walletId: String, assetId: String, amount: Double, blockedAmount: Double): Wallet {
@@ -11,4 +11,7 @@ data class Wallet(val walletId: String, val assets: Map<String, Asset>) {
     }
 }
 
-data class Asset(val assetId: String, val amount: Double, val blocked: Double)
+data class Asset(val assetId: String, val amount: Double, val blocked: Double) {
+
+    fun available() = amount - blocked
+}
