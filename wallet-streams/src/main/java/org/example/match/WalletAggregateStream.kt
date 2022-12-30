@@ -7,6 +7,7 @@ import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.StreamsConfig
 import org.apache.kafka.streams.Topology
 import org.apache.kafka.streams.kstream.Consumed
+import org.apache.kafka.streams.kstream.KStream
 import org.apache.kafka.streams.kstream.Materialized
 import org.apache.kafka.streams.kstream.Produced
 import org.apache.kafka.streams.state.KeyValueStore
@@ -18,6 +19,49 @@ import org.springframework.kafka.support.serializer.JsonSerde
 import java.util.*
 import java.util.concurrent.CountDownLatch
 
+fun KStream<String, WalletCommand>.aggregateWallets(): KStream<String, Wallet> {
+    return this
+        .groupByKey()
+        .aggregate(
+            //Initializer
+            {
+                Wallet(
+                    UUID.randomUUID().toString(),
+                    emptyMap()
+                )
+            },
+
+            //Adder
+            { _: String, command: WalletCommand, aggV: Wallet ->
+
+                val assetModifyFunction = when (command.operation) {
+                    WalletOperation.RELEASE_AND_DEBIT -> { asset: Asset ->
+                        //FIXME release amount could be more than debit amount
+                        asset.copy(
+                            blocked = asset.blocked - command.amount,
+                            amount = asset.amount - command.amount
+                        )
+                    }
+
+                    WalletOperation.CREDIT -> { asset: Asset -> asset.copy(amount = asset.amount + command.amount) }
+                    WalletOperation.DEBIT -> { asset: Asset -> asset.copy(amount = asset.amount - command.amount) }
+                }
+
+                var asset = aggV.assets.getOrDefault(command.assetId, Asset(command.assetId, 0.0, 0.0))
+                asset = assetModifyFunction(asset)
+                val newAssets = aggV.assets + arrayOf(command.assetId to asset)
+                aggV.copy(walletId = command.walletId, assets = newAssets, txCount = aggV.txCount + 1)
+
+            },
+            //Materialize
+            Materialized.`as`<String, Wallet, KeyValueStore<Bytes, ByteArray>>("wallet-store")
+                .withKeySerde(Serdes.String())
+                .withValueSerde(JsonSerde(Wallet::class.java))
+        )
+        .toStream()
+
+}
+
 fun walletAggregateStream(): KafkaStreams {
     val props = Properties()
     props[StreamsConfig.APPLICATION_ID_CONFIG] = "wallet-stream"
@@ -28,50 +72,14 @@ fun walletAggregateStream(): KafkaStreams {
     builder.stream(
         "wallet-commands",
         Consumed.with(Serdes.String(), JsonSerde(WalletCommand::class.java))
-    ) //from topic "wallet-commands
-        .groupBy { key: String, (_, walletId): WalletCommand -> walletId } //group by wallet_id
-        .aggregate(
-            //Initializer
-            {
-                Wallet(
-                    UUID.randomUUID().toString(),
-                    HashMap()
-                )
-            },
-
-            //Adder
-            { k: String, command: WalletCommand, aggV: Wallet ->
-
-                val assetModifyFunction = when (command.operation) {
-                    WalletOperation.RELEASE_AND_DEBIT -> { asset: Asset ->
-                        //FIXME release amount could be more than debit amount
-                        asset.copy(
-                            blocked = asset.blocked - command.amount,
-                            amount = asset.amount - command.amount
-                        )
-                    }
-                    WalletOperation.CREDIT -> { asset: Asset -> asset.copy(amount = asset.amount + command.amount) }
-                    WalletOperation.DEBIT -> { asset: Asset -> asset.copy(amount = asset.amount - command.amount) }
-                }
-
-                var asset = aggV.assets.getOrDefault(command.assetId, Asset(command.assetId, 0.0, 0.0))
-                asset = assetModifyFunction(asset)
-                val newAssets = aggV.assets + arrayOf(command.assetId to asset)
-                aggV.copy(assets = newAssets, txCount = aggV.txCount + 1)
-
-            },
-            //Materialize
-            Materialized.`as`<String, Wallet, KeyValueStore<Bytes, ByteArray>>("wallet-store")
-                .withKeySerde(Serdes.String())
-                .withValueSerde(JsonSerde(Wallet::class.java))
-        )
-        .toStream()
+    ).aggregateWallets()
         .to("wallet-aggregate", Produced.with(Serdes.String(), JsonSerde(Wallet::class.java)))
 
     val topology: Topology = builder.build()
     val streams = KafkaStreams(topology, props)
     return streams
 }
+
 object WalletTransactionStream {
     @Throws(Exception::class)
     @JvmStatic

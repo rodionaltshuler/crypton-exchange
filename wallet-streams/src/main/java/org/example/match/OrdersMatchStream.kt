@@ -11,6 +11,7 @@ import org.apache.kafka.streams.kstream.Produced
 import org.apache.kafka.streams.state.*
 import org.example.OrderCommandType.*
 import org.example.OrdersMatchCommand
+import org.example.Wallet
 import org.example.WalletCommand
 import org.example.WalletOperation
 import org.springframework.kafka.support.serializer.JsonSerde
@@ -41,7 +42,6 @@ object OrdersMatchStream {
 
         inputStream
             .flatMap { matchId, matchCommand ->
-
                 val leftWalletCredit = WalletCommand(
                     id = matchId + "_" + matchCommand.leftOrder.walletId + "_" + WalletOperation.CREDIT,
                     causeId = matchId,
@@ -81,7 +81,8 @@ object OrdersMatchStream {
                     KeyValue(rightWalletDebit.walletId, rightWalletDebit)
                 )
             }
-            .to("wallet-commands", Produced.with(Serdes.String(), JsonSerde(WalletCommand::class.java)))
+            .aggregateWallets()
+            .to("wallets-aggregated", Produced.with(Serdes.String(), JsonSerde(Wallet::class.java)))
 
         val topology: Topology = builder.build()
 
