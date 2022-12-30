@@ -22,11 +22,12 @@ data class Order(
 
 data class OrderCommand(
     val orderId: String,
+    val causeId: String,
     val command: OrderCommandType,
     val order: Order
 )
 enum class OrderCommandType {
-    SUBMIT, CANCEL
+    SUBMIT, CANCEL, FILL
 }
 
 

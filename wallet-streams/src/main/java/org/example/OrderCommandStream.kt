@@ -87,6 +87,7 @@ object OrderCommandStream {
                         it.order.copy(status = OrderStatus.CONFIRMED)
                     } //and block assets in the wallet
                     CANCEL -> it.order.copy(status = OrderStatus.CANCELLED) //and release assets in the wallet
+                    FILL -> it.order.copy(qty = 0.0, status = OrderStatus.FILLED)
                 }
                 println("Sending order: $order")
                 order

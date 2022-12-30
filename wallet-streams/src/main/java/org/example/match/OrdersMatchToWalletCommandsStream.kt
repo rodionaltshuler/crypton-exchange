@@ -22,7 +22,7 @@ import java.util.concurrent.CountDownLatch
 /**
  * Transform orders match command to multiple wallet commands
  */
-object OrdersMatchStream {
+object OrdersMatchToWalletCommandsStream {
     @Throws(Exception::class)
     @JvmStatic
     fun main(args: Array<String>) {
