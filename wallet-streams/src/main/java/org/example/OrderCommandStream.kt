@@ -10,6 +10,7 @@ import org.apache.kafka.streams.kstream.Consumed
 import org.apache.kafka.streams.kstream.Produced
 import org.apache.kafka.streams.state.*
 import org.example.OrderCommandType.*
+import org.example.match.walletAggregateStream
 import org.springframework.kafka.support.serializer.JsonSerde
 import java.util.*
 import java.util.concurrent.CountDownLatch

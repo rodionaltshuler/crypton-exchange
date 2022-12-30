@@ -72,6 +72,7 @@ class WalletCommandProcessor : Processor<String, WalletCommand, String, WalletCo
         val command = record!!.value()
         val wallet = kvStore.get(command.walletId);
 
+
         //TODO
         //TODO what if we simply perform our order processing here, adjusting wallet state in a store?
         //TODODODO
