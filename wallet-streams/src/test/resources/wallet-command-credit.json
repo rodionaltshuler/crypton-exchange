@@ -1,0 +1,8 @@
+{
+  "id": "command_4",
+  "causeId": "deposit_1",
+  "walletId": "wallet_1",
+  "assetId": "ETH",
+  "operation": "CREDIT",
+  "amount": 1.5
+}

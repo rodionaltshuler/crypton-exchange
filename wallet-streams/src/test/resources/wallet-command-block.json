@@ -1,0 +1,8 @@
+{
+  "id": "command_3",
+  "causeId": "order_3",
+  "walletId": "wallet_1",
+  "assetId": "ETH",
+  "operation": "BLOCK",
+  "amount": 0.99
+}

@@ -5,8 +5,11 @@ import org.apache.kafka.streams.KafkaStreams
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.StreamsConfig
 import org.apache.kafka.streams.Topology
+import org.apache.kafka.streams.processor.api.ProcessorSupplier
 import org.apache.kafka.streams.state.*
 import org.example.OrderCommandType.*
+import org.example.WalletCommand
+import org.springframework.kafka.support.serializer.JsonSerde
 import java.util.*
 import java.util.concurrent.CountDownLatch
 
@@ -30,13 +33,28 @@ object Application {
 
         builder.orderMatchToWalletCommands()
 
-        builder.walletCommandsToWalletAggregated()
+        //builder.walletCommandsToWalletAggregated()
 
         builder.orderMatchToOrderCommands()
 
         builder.orderCommandsToOrdersAggregated()
 
         val topology: Topology = builder.build()
+
+        topology.addSource("WalletCommandSource",
+            Serdes.String().deserializer(),
+            JsonSerde(WalletCommand::class.java).deserializer(),
+            "wallet-commands")
+
+        topology.addProcessor("WalletCommandsProcessor", ProcessorSupplier { WalletCommandProcessor() }, "WalletCommandSource")
+
+        topology.addStateStore(walletCommandProcessorStoreBuilder, "WalletCommandsProcessor")
+        topology.addSink("WalletCommandsSink",
+            "wallet-commands-processed",
+            Serdes.String().serializer(),
+            JsonSerde(WalletCommand::class.java).serializer(),
+            "WalletCommandsProcessor"
+            )
 
         println("TOPOLOGY: \n ${topology.describe()}")
 
