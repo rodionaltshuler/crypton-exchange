@@ -14,10 +14,10 @@ data class Order(
     val quoteAssetId: String,
     val walletId: String,
     val orderType: OrderType,
-    val price: Double,
-    val qty: Double,
+    val price: Double = 0.0,
+    val qty: Double = 0.0,
     val qtyFilled: Double = 0.0,
-    val status: OrderStatus
+    val status: OrderStatus = OrderStatus.NEW
 )
 
 data class OrderCommand(

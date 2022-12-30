@@ -19,91 +19,48 @@ import java.util.*
 import java.util.concurrent.CountDownLatch
 
 
-/**
- * Transform orders match command to multiple wallet commands
- */
-object OrdersMatchToWalletCommandsStream {
-    @Throws(Exception::class)
-    @JvmStatic
-    fun main(args: Array<String>) {
-
-        val props = Properties()
-        props[StreamsConfig.APPLICATION_ID_CONFIG] = "orders-match-stream"
-        props[StreamsConfig.BOOTSTRAP_SERVERS_CONFIG] = "localhost:9092"
-        props[StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG] = Serdes.String().javaClass
-        props[StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG] = Serdes.String().javaClass
-        props[StreamsConfig.PROCESSING_GUARANTEE_CONFIG] = StreamsConfig.EXACTLY_ONCE_V2
-
-        val builder = StreamsBuilder()
-
-        val inputStream = builder.stream(
-            "orders-match-commands", Consumed.with(Serdes.String(), JsonSerde(OrdersMatchCommand::class.java))
-        )
-
-        inputStream
-            .flatMap { matchId, matchCommand ->
-                val leftWalletCredit = WalletCommand(
-                    id = matchId + "_" + matchCommand.leftOrder.walletId + "_" + WalletOperation.CREDIT,
-                    causeId = matchId,
-                    walletId = matchCommand.leftOrder.walletId,
-                    assetId = matchCommand.leftOrder.baseAssetId,
-                    operation = WalletOperation.CREDIT,
-                    amount = matchCommand.qtyFilled
-                )
-                val leftWalletDebit = WalletCommand(
-                    id = matchId + "_" + matchCommand.leftOrder.walletId + "_" + WalletOperation.RELEASE_AND_DEBIT,
-                    causeId = matchId,
-                    walletId = matchCommand.leftOrder.walletId,
-                    assetId = matchCommand.leftOrder.quoteAssetId,
-                    operation = WalletOperation.RELEASE_AND_DEBIT,
-                    amount = matchCommand.qtyFilled * matchCommand.price
-                )
-                val rightWalletCredit = WalletCommand(
-                    id = matchId + "_" + matchCommand.rightOrder.walletId + "_" + WalletOperation.CREDIT,
-                    causeId = matchId,
-                    walletId = matchCommand.rightOrder.walletId,
-                    assetId = matchCommand.rightOrder.quoteAssetId,
-                    operation = WalletOperation.CREDIT,
-                    amount = matchCommand.qtyFilled * matchCommand.price
-                )
-                val rightWalletDebit = WalletCommand(
-                    id = matchId + "_" + matchCommand.rightOrder.walletId + "_" + WalletOperation.RELEASE_AND_DEBIT,
-                    causeId = matchId,
-                    walletId = matchCommand.rightOrder.walletId,
-                    assetId = matchCommand.rightOrder.baseAssetId,
-                    operation = WalletOperation.RELEASE_AND_DEBIT,
-                    amount = matchCommand.qtyFilled
-                )
-                listOf(
-                    KeyValue(leftWalletCredit.walletId, leftWalletCredit),
-                    KeyValue(leftWalletDebit.walletId, leftWalletDebit),
-                    KeyValue(rightWalletCredit.walletId, rightWalletCredit),
-                    KeyValue(rightWalletDebit.walletId, rightWalletDebit)
-                )
-            }
-            .aggregateWallets()
-            .to("wallets-aggregated", Produced.with(Serdes.String(), JsonSerde(Wallet::class.java)))
-
-        val topology: Topology = builder.build()
-
-        println("TOPOLOGY: \n ${topology.describe()}")
-
-        val streams = KafkaStreams(topology, props)
-        val latch = CountDownLatch(1)
-
-        // attach shutdown handler to catch control-c
-        Runtime.getRuntime().addShutdownHook(object : Thread("orders-match-stream-shutdown-hook") {
-            override fun run() {
-                streams.close()
-                latch.countDown()
-            }
-        })
-        try {
-            streams.start()
-            latch.await()
-        } catch (e: Throwable) {
-            System.exit(1)
+fun StreamsBuilder.orderMatchToWalletCommands() {
+    this.stream("orders-match-commands", Consumed.with(Serdes.String(), JsonSerde(OrdersMatchCommand::class.java)))
+        .flatMap { matchId, matchCommand ->
+            val leftWalletCredit = WalletCommand(
+                id = matchId + "_" + matchCommand.leftOrder.walletId + "_" + WalletOperation.CREDIT,
+                causeId = matchId,
+                walletId = matchCommand.leftOrder.walletId,
+                assetId = matchCommand.leftOrder.baseAssetId,
+                operation = WalletOperation.CREDIT,
+                amount = matchCommand.qtyFilled
+            )
+            val leftWalletDebit = WalletCommand(
+                id = matchId + "_" + matchCommand.leftOrder.walletId + "_" + WalletOperation.RELEASE_AND_DEBIT,
+                causeId = matchId,
+                walletId = matchCommand.leftOrder.walletId,
+                assetId = matchCommand.leftOrder.quoteAssetId,
+                operation = WalletOperation.RELEASE_AND_DEBIT,
+                amount = matchCommand.qtyFilled * matchCommand.price
+            )
+            val rightWalletCredit = WalletCommand(
+                id = matchId + "_" + matchCommand.rightOrder.walletId + "_" + WalletOperation.CREDIT,
+                causeId = matchId,
+                walletId = matchCommand.rightOrder.walletId,
+                assetId = matchCommand.rightOrder.quoteAssetId,
+                operation = WalletOperation.CREDIT,
+                amount = matchCommand.qtyFilled * matchCommand.price
+            )
+            val rightWalletDebit = WalletCommand(
+                id = matchId + "_" + matchCommand.rightOrder.walletId + "_" + WalletOperation.RELEASE_AND_DEBIT,
+                causeId = matchId,
+                walletId = matchCommand.rightOrder.walletId,
+                assetId = matchCommand.rightOrder.baseAssetId,
+                operation = WalletOperation.RELEASE_AND_DEBIT,
+                amount = matchCommand.qtyFilled
+            )
+            listOf(
+                KeyValue(leftWalletCredit.walletId, leftWalletCredit),
+                KeyValue(leftWalletDebit.walletId, leftWalletDebit),
+                KeyValue(rightWalletCredit.walletId, rightWalletCredit),
+                KeyValue(rightWalletDebit.walletId, rightWalletDebit)
+            )
         }
-        System.exit(0)
-    }
+        .to("wallet-commands", Produced.with(Serdes.String(), JsonSerde(WalletCommand::class.java)))
+
 }
