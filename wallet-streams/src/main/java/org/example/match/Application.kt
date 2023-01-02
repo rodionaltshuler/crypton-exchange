@@ -20,6 +20,7 @@ import org.example.wallet.walletCommandProcessorStoreBuilder
 import org.springframework.kafka.support.serializer.JsonSerde
 import java.util.*
 import java.util.concurrent.CountDownLatch
+import kotlin.system.exitProcess
 
 
 /**
@@ -30,63 +31,9 @@ object Application {
     @JvmStatic
     fun main(args: Array<String>) {
 
-        val props = Properties()
-        props[StreamsConfig.APPLICATION_ID_CONFIG] = "orders-match-processing-application-stream"
-        props[StreamsConfig.BOOTSTRAP_SERVERS_CONFIG] = "localhost:9092"
-        props[StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG] = Serdes.String().javaClass
-        props[StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG] = Serdes.String().javaClass
-        props[StreamsConfig.PROCESSING_GUARANTEE_CONFIG] = StreamsConfig.EXACTLY_ONCE_V2
-        props[StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG] = LogAndContinueExceptionHandler::class.java
+        val props = properties()
 
-
-        val topology: Topology = StreamsBuilder().build()
-
-        topology.addSource("OrderCommandsSource",
-            Serdes.String().deserializer(),
-            JsonSerde(OrderCommand::class.java).deserializer(),
-            "order-commands")
-
-        topology.addProcessor("OrderCommandsProcessor", ProcessorSupplier { OrderCommandsProcessor() }, "OrderCommandsSource" )
-
-        topology.addProcessor("RejectedOrderCommandsProcessor", ProcessorSupplier { RejectedOrderCommandsProcessor() }, "OrderCommandsProcessor" )
-
-        topology.addSink("RejectedOrderCommandsSink",
-            "order-commands-rejected",
-            Serdes.String().serializer(),
-            JsonSerde(OrderCommand::class.java).serializer(),
-            "RejectedOrderCommandsProcessor"
-        )
-
-        topology.addProcessor("OrderCommandToWalletCommandsProcessor", ProcessorSupplier { OrderCommandsToWalletCommandsProcessor() }, "OrderCommandsProcessor" )
-
-        topology.addSink("WalletCommandsSink",
-            "wallet-commands",
-            Serdes.String().serializer(),
-            JsonSerde(WalletCommand::class.java).serializer(),
-            "OrderCommandToWalletCommandsProcessor"
-        )
-
-
-
-        topology.addStateStore(orderStoreBuilder, "OrderCommandsProcessor", "RejectedOrderCommandsProcessor")
-
-        topology.addSource(
-            "WalletCommandsSource",
-            Serdes.String().deserializer(),
-            JsonSerde(WalletCommand::class.java).deserializer(),
-            "wallet-commands",
-        )
-
-        topology.addProcessor("WalletCommandsProcessor", ProcessorSupplier { WalletCommandProcessor() }, "WalletCommandsSource")
-
-        topology.addStateStore(walletCommandProcessorStoreBuilder, "WalletCommandsProcessor")
-
-        topology.addSink("WalletCommandsConfirmedSink",
-            "wallet-commands-confirmed",
-            Serdes.String().serializer(),
-            JsonSerde(WalletCommand::class.java).serializer(),
-            "WalletCommandsProcessor"
-            )
+        val topology = topology()
 
         println("TOPOLOGY: \n ${topology.describe()}")
 
@@ -104,8 +51,72 @@ object Application {
             streams.start()
             latch.await()
         } catch (e: Throwable) {
-            System.exit(1)
+            exitProcess(1)
         }
-        System.exit(0)
+        exitProcess(0)
     }
+
+
+}
+
+fun properties(): Properties {
+    val props = Properties()
+    props[StreamsConfig.APPLICATION_ID_CONFIG] = "orders-match-processing-application-stream"
+    props[StreamsConfig.BOOTSTRAP_SERVERS_CONFIG] = "localhost:9092"
+    props[StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG] = Serdes.String().javaClass
+    props[StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG] = Serdes.String().javaClass
+    props[StreamsConfig.PROCESSING_GUARANTEE_CONFIG] = StreamsConfig.EXACTLY_ONCE_V2
+    props[StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG] =
+        LogAndContinueExceptionHandler::class.java
+    return props
+}
+fun topology(): Topology {
+    val topology: Topology = StreamsBuilder().build()
+
+    topology.addSource("OrderCommandsSource",
+        Serdes.String().deserializer(),
+        JsonSerde(OrderCommand::class.java).deserializer(),
+        "order-commands")
+
+    topology.addProcessor("OrderCommandsProcessor", ProcessorSupplier { OrderCommandsProcessor() }, "OrderCommandsSource" )
+
+    topology.addProcessor("RejectedOrderCommandsProcessor", ProcessorSupplier { RejectedOrderCommandsProcessor() }, "OrderCommandsProcessor" )
+
+    topology.addSink("RejectedOrderCommandsSink",
+        "order-commands-rejected",
+        Serdes.String().serializer(),
+        JsonSerde(OrderCommand::class.java).serializer(),
+        "RejectedOrderCommandsProcessor"
+    )
+
+    topology.addProcessor("OrderCommandToWalletCommandsProcessor", ProcessorSupplier { OrderCommandsToWalletCommandsProcessor() }, "OrderCommandsProcessor" )
+
+    topology.addSink("WalletCommandsSink",
+        "wallet-commands",
+        Serdes.String().serializer(),
+        JsonSerde(WalletCommand::class.java).serializer(),
+        "OrderCommandToWalletCommandsProcessor"
+    )
+
+
+    topology.addStateStore(orderStoreBuilder, "OrderCommandsProcessor", "RejectedOrderCommandsProcessor")
+
+    topology.addSource(
+        "WalletCommandsSource",
+        Serdes.String().deserializer(),
+        JsonSerde(WalletCommand::class.java).deserializer(),
+        "wallet-commands",
+    )
+
+    topology.addProcessor("WalletCommandsProcessor", ProcessorSupplier { WalletCommandProcessor() }, "WalletCommandsSource")
+
+    topology.addStateStore(walletCommandProcessorStoreBuilder, "WalletCommandsProcessor")
+
+    topology.addSink("WalletCommandsConfirmedSink",
+        "wallet-commands-confirmed",
+        Serdes.String().serializer(),
+        JsonSerde(WalletCommand::class.java).serializer(),
+        "WalletCommandsProcessor"
+    )
+    return topology
 }
