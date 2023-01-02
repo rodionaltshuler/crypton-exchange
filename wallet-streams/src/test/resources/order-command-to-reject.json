@@ -1,11 +1,11 @@
 {
-  "id": "order_command_1",
-  "orderId": "order_1",
+  "id": "order_command_5",
+  "orderId": "order_5",
   "command": "SUBMIT",
-  "causeId": "order_1",
+  "causeId": "order_5",
   "message": "",
   "order": {
-      "id": "order_1",
+      "id": "order_5",
       "baseAssetId":"BTC",
       "quoteAssetId": "ETH",
       "walletId": "wallet_1",
@@ -13,6 +13,6 @@
       "price": 0.778,
       "qty": 2.0,
       "qtyFilled": 0.0,
-      "status": "NEW"
+      "status": "FILLED"
   }
 }

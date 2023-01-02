@@ -5,7 +5,7 @@ data class WalletCommand(val id: String, val causeId: String, val walletId: Stri
     val message: String = "")
 
 enum class WalletOperation {
-    DEBIT, CREDIT, RELEASE_AND_DEBIT, BLOCK
+    DEBIT, CREDIT, RELEASE_AND_DEBIT, BLOCK, UNBLOCK
 }
 
 enum class WalletCommandStatus {
