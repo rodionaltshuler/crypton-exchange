@@ -169,7 +169,7 @@ class ApplicationTests {
 
 
     @Test
-    fun `order-command-store contains orderCommand referenced by orderCommandId header delivered to wallet-commands-confirmed topic`(){
+    fun `order is present in the order-store after ConfirmedOrderCommandsProcessor, and order command is cleared from order-commands-store `(){
 
         val input = testDriver.createInputTopic("order-commands", Serdes.String().serializer(), JsonSerde(OrderCommand::class.java).serializer())
         val inputStream = this::class.java.classLoader.getResourceAsStream("order-command.json")?.bufferedReader()?.readText()
@@ -187,12 +187,18 @@ class ApplicationTests {
 
         input.pipeInput(record)
 
-        val outputTopic = testDriver.createOutputTopic("wallet-commands-confirmed", Serdes.String().deserializer(), JsonSerde(WalletCommand::class.java).deserializer())
+        val outputTopic = testDriver.createOutputTopic("orders-confirmed", Serdes.String().deserializer(), JsonSerde(Order::class.java).deserializer())
         val actualOutputRecord = outputTopic.readRecord()
+        assert(actualOutputRecord.value != null)
+        assert(actualOutputRecord.value.status == OrderStatus.CONFIRMED)
 
-        val header = actualOutputRecord.headers().find { it.key() == "orderCommandId" }
-        val orderCommandId = String(header!!.value())
-        val orderCommandStore = testDriver.getKeyValueStore<String, OrderCommand>("order-commands-store")
-        assert(orderCommandStore.get(orderCommandId) != null)
+        val orderStore = testDriver.getKeyValueStore<String, Order>("order-store")
+
+        assert(orderStore.get(orderCommand.orderId) != null) //and order is present
+        assert(orderStore.get(orderCommand.orderId).status == OrderStatus.CONFIRMED)
+
+
+        val orderCommandsStore = testDriver.getKeyValueStore<String, OrderCommand>("order-commands-store")
+        assert(orderCommandsStore.get(orderCommand.id) == null)
     }
 }

@@ -12,52 +12,43 @@ class ConfirmedOrderCommandsProcessor : Processor<String, WalletCommand, String,
 
     private lateinit var orderStore: KeyValueStore<String, Order>
 
+    private lateinit var orderCommandsStore: KeyValueStore<String, OrderCommand>
+
     private lateinit var context: ProcessorContext<String, Order>
 
     override fun init(context: ProcessorContext<String, Order>?) {
         super.init(context)
         orderStore = context!!.getStateStore("order-store")
+        orderCommandsStore = context!!.getStateStore("order-commands-store")
         this.context = context
     }
 
     override fun process(record: Record<String, WalletCommand>?) {
-        //TODO order command is valid, wallet has enough funds -> execute command here
-        val command = record!!.value()
+        val orderCommandIdHeader = record!!.headers().find { it.key() == "orderCommandId" }
 
-        //TODO how do we know what was the order command? SUBMIT, CANCEL, FILL?
-        val orderCommandType = OrderCommandType.SUBMIT //FIXME figure out actual command
+        if (orderCommandIdHeader != null) {
+            val orderCommandId = String(orderCommandIdHeader.value())
+            val orderCommand = orderCommandsStore.get(orderCommandId)
+            val orderId = orderCommand.orderId
 
-        val orderCommand = OrderCommand(UUID.randomUUID().toString(),
-            orderId = "",
-            causeId = "",
-            command = orderCommandType,
-            order = Order(
-                id = "",
-                baseAssetId = "BTC",
-                quoteAssetId = "ETH",
-                walletId = "",
-                orderType = OrderType.LIMIT_BUY,
-                price = 1.0,
-                qty = 1.0,
-                qtyFilled = 0.0,
-                status = OrderStatus.NEW
-            )) //FIXME get real order command
-
-        val orderHeader = record.headers().find { it.key() == "orderId" }
-        if (orderHeader != null) {
-            val orderId = String(orderHeader.value())
-
-            val order = when (orderCommandType) {
+            val order = when (orderCommand.command) {
                 OrderCommandType.SUBMIT -> {
+                    //if order has just been submitted, it's not in the store, so we're constructing it from the command
                     orderCommand.order.copy(status = OrderStatus.CONFIRMED)
                 }
 
                 OrderCommandType.CANCEL -> {
-                    orderCommand.order.copy(status = OrderStatus.CANCELLED)
+                    //taking the order from the store, because regardless one command says
+                    // (it might not have order data at all) - we have approved the order which is in the store
+                    val order = orderStore.get(orderId)
+                    order.copy(status = OrderStatus.CANCELLED)
                 }
 
                 OrderCommandType.FILL -> {
-                    orderCommand.order.copy(status = OrderStatus.FILLED)
+                    //taking the order from the store, because regardless one command says
+                    // (it might not have order data at all) - we have approved the order which is in the store
+                    val order = orderStore.get(orderId)
+                    order.copy(status = OrderStatus.FILLED)
                 }
             }
 
@@ -70,6 +61,9 @@ class ConfirmedOrderCommandsProcessor : Processor<String, WalletCommand, String,
                     orderStore.delete(orderId)
                 }
             }
+
+            //don't need order command anymore
+            orderCommandsStore.delete(orderCommandId)
 
             val outRecord = Record(
                 orderId,
