@@ -78,6 +78,8 @@ fun topology(): Topology {
 
     topology.addProcessor("OrderCommandsProcessor", ProcessorSupplier { OrderCommandsProcessor() }, "OrderCommandsSource" )
 
+    topology.addStateStore(orderCommandsStoreBuilder, "OrderCommandsProcessor")
+
     topology.addProcessor("RejectedOrderCommandsProcessor", ProcessorSupplier { RejectedOrderCommandsProcessor() }, "OrderCommandsProcessor" )
 
     topology.addSink("RejectedOrderCommandsSink",

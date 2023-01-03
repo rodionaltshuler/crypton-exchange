@@ -32,7 +32,7 @@ class WalletCommandProcessor : Processor<String, WalletCommand, String, WalletCo
     override fun process(record: Record<String, WalletCommand>?) {
 
         val command = record!!.value()
-        val headers = RecordHeaders(record.headers().filter { it.key() == "orderId" })
+        val headers = RecordHeaders(record.headers().filter { it.key() == "orderCommandId" })
 
         walletStore.putIfAbsent(
             command.walletId,

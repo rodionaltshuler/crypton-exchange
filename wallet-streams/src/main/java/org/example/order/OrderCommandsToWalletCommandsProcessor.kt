@@ -2,15 +2,13 @@ package org.example.order
 
 import org.apache.kafka.common.header.internals.RecordHeader
 import org.apache.kafka.common.header.internals.RecordHeaders
-import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.processor.api.Processor
 import org.apache.kafka.streams.processor.api.ProcessorContext
 import org.apache.kafka.streams.processor.api.Record
-import org.apache.kafka.streams.state.KeyValueStore
-import org.apache.kafka.streams.state.StoreBuilder
-import org.apache.kafka.streams.state.Stores
-import org.example.*
-import org.springframework.kafka.support.serializer.JsonSerde
+import org.example.OrderCommand
+import org.example.OrderCommandType
+import org.example.WalletCommand
+import org.example.WalletOperation
 
 
 class OrderCommandsToWalletCommandsProcessor : Processor<String, OrderCommand, String, WalletCommand> {
@@ -74,7 +72,7 @@ class OrderCommandsToWalletCommandsProcessor : Processor<String, OrderCommand, S
                 } //unblock and debit one asset and credit another
             }
 
-        val header = RecordHeader("orderId", command.order.id.toByteArray())
+        val header = RecordHeader("orderCommandId", command.id.toByteArray())
 
         walletCommands.map {
             Record(

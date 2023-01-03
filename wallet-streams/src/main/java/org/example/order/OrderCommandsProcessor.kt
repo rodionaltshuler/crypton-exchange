@@ -22,20 +22,30 @@ val orderStoreBuilder: StoreBuilder<*> = Stores.keyValueStoreBuilder(
 )
 
 
+val orderCommandsStoreBuilder: StoreBuilder<*> = Stores.keyValueStoreBuilder(
+    Stores.persistentKeyValueStore("order-commands-store"),
+    Serdes.String(),
+    JsonSerde(OrderCommand::class.java)
+)
+
 class OrderCommandsProcessor : Processor<String, OrderCommand, String, OrderCommand> {
 
     private lateinit var orderStore: ReadOnlyKeyValueStore<String, Order>
+
+    private lateinit var orderCommandsStore: KeyValueStore<String, OrderCommand>
 
     private lateinit var context: ProcessorContext<String, OrderCommand>
 
     override fun init(context: ProcessorContext<String, OrderCommand>?) {
         super.init(context)
         orderStore = context!!.getStateStore("order-store")
+        orderCommandsStore = context.getStateStore("order-commands-store")
         this.context = context
     }
 
     override fun process(record: Record<String, OrderCommand>?) {
         val command = record!!.value()
+        orderCommandsStore.put(command.id, command)
         when (command.command) {
             OrderCommandType.SUBMIT -> {
                 if (command.order.status == OrderStatus.NEW) {

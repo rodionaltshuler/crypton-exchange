@@ -47,7 +47,7 @@ class ApplicationTests {
     }
 
     @Test
-    fun `rejected order doesn't produce wallet command`() {
+    fun ` order doesn't produce wallet command`() {
         val input = testDriver.createInputTopic("order-commands", Serdes.String().serializer(), JsonSerde(OrderCommand::class.java).serializer())
         val inputStream = this::class.java.classLoader.getResourceAsStream("order-command-to-reject.json")?.bufferedReader()?.readText()
         val orderCommand = objectMapper.readValue(inputStream, OrderCommand::class.java)
@@ -138,7 +138,7 @@ class ApplicationTests {
     }
 
     @Test
-    fun `confirmed wallet command caused by order has orderId header`() {
+    fun `confirmed wallet command caused by order has orderCommandId header`() {
 
 
         val input = testDriver.createInputTopic("order-commands", Serdes.String().serializer(), JsonSerde(OrderCommand::class.java).serializer())
@@ -160,10 +160,39 @@ class ApplicationTests {
         val outputTopic = testDriver.createOutputTopic("wallet-commands-confirmed", Serdes.String().deserializer(), JsonSerde(WalletCommand::class.java).deserializer())
         val actualOutputRecord = outputTopic.readRecord()
 
-        val header = actualOutputRecord.headers().find { it.key() == "orderId" }
+        val header = actualOutputRecord.headers().find { it.key() == "orderCommandId" }
 
         assert(header != null)
-        assert(String(header!!.value()) == orderCommand.orderId)
+        assert(String(header!!.value()) == orderCommand.id)
 
+    }
+
+
+    @Test
+    fun `order-command-store contains orderCommand referenced by orderCommandId header delivered to wallet-commands-confirmed topic`(){
+
+        val input = testDriver.createInputTopic("order-commands", Serdes.String().serializer(), JsonSerde(OrderCommand::class.java).serializer())
+        val inputStream = this::class.java.classLoader.getResourceAsStream("order-command.json")?.bufferedReader()?.readText()
+        val orderCommand = objectMapper.readValue(inputStream, OrderCommand::class.java)
+        val record = TestRecord(orderCommand.orderId, orderCommand)
+
+        val walletStore = testDriver.getKeyValueStore<String, Wallet>("wallet-store")
+        var wallet= Wallet(orderCommand.order.walletId, emptyMap())
+        val assets : Map<String, Asset> = wallet.assets + arrayOf(
+            orderCommand.order.baseAssetId to Asset(orderCommand.order.baseAssetId, orderCommand.order.qty * orderCommand.order.price, 0.0),
+            orderCommand.order.quoteAssetId to Asset(orderCommand.order.quoteAssetId, orderCommand.order.qty * orderCommand.order.price, 0.0)
+        )
+        wallet = wallet.copy(assets = assets)
+        walletStore.put(wallet.walletId, wallet)
+
+        input.pipeInput(record)
+
+        val outputTopic = testDriver.createOutputTopic("wallet-commands-confirmed", Serdes.String().deserializer(), JsonSerde(WalletCommand::class.java).deserializer())
+        val actualOutputRecord = outputTopic.readRecord()
+
+        val header = actualOutputRecord.headers().find { it.key() == "orderCommandId" }
+        val orderCommandId = String(header!!.value())
+        val orderCommandStore = testDriver.getKeyValueStore<String, OrderCommand>("order-commands-store")
+        assert(orderCommandStore.get(orderCommandId) != null)
     }
 }
