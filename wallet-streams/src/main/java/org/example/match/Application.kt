@@ -8,13 +8,11 @@ import org.apache.kafka.streams.Topology
 import org.apache.kafka.streams.errors.LogAndContinueExceptionHandler
 import org.apache.kafka.streams.processor.api.ProcessorSupplier
 import org.apache.kafka.streams.state.*
+import org.example.Order
 import org.example.OrderCommand
 import org.example.OrderCommandType.*
 import org.example.WalletCommand
-import org.example.order.OrderCommandsProcessor
-import org.example.order.OrderCommandsToWalletCommandsProcessor
-import org.example.order.RejectedOrderCommandsProcessor
-import org.example.order.orderStoreBuilder
+import org.example.order.*
 import org.example.wallet.WalletCommandProcessor
 import org.example.wallet.walletCommandProcessorStoreBuilder
 import org.springframework.kafka.support.serializer.JsonSerde
@@ -99,7 +97,6 @@ fun topology(): Topology {
     )
 
 
-    topology.addStateStore(orderStoreBuilder, "OrderCommandsProcessor", "RejectedOrderCommandsProcessor")
 
     topology.addSource(
         "WalletCommandsSource",
@@ -124,6 +121,23 @@ fun topology(): Topology {
         Serdes.String().serializer(),
         JsonSerde(WalletCommand::class.java).serializer(),
         "WalletCommandsProcessor"
+    )
+
+    topology.addSource("WalletCommandsConfirmedSource",
+        Serdes.String().deserializer(),
+        JsonSerde(WalletCommand::class.java).deserializer(),
+        "wallet-commands-confirmed",
+    )
+
+    topology.addProcessor("ConfirmedOrderCommandsProcessor", ProcessorSupplier { ConfirmedOrderCommandsProcessor() }, "WalletCommandsConfirmedSource")
+
+    topology.addStateStore(orderStoreBuilder, "OrderCommandsProcessor", "ConfirmedOrderCommandsProcessor")
+
+    topology.addSink("OrdersConfirmedSink",
+        "orders-confirmed",
+        Serdes.String().serializer(),
+        JsonSerde(Order::class.java).serializer(),
+        "ConfirmedOrderCommandsProcessor"
     )
 
     return topology

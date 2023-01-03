@@ -155,10 +155,9 @@ class ApplicationTests {
         wallet = wallet.copy(assets = assets)
         walletStore.put(wallet.walletId, wallet)
 
-
         input.pipeInput(record)
 
-        val outputTopic = testDriver.createOutputTopic("wallet-commands-confirmed", Serdes.String().deserializer(), JsonSerde(OrderCommand::class.java).deserializer())
+        val outputTopic = testDriver.createOutputTopic("wallet-commands-confirmed", Serdes.String().deserializer(), JsonSerde(WalletCommand::class.java).deserializer())
         val actualOutputRecord = outputTopic.readRecord()
 
         val header = actualOutputRecord.headers().find { it.key() == "orderId" }

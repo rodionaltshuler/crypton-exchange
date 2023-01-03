@@ -28,6 +28,7 @@ data class OrderCommand(
     val order: Order,
     val message: String = ""
 )
+
 enum class OrderCommandType {
     SUBMIT, CANCEL, FILL
 }

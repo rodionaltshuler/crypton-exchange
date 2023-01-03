@@ -9,14 +9,11 @@ import org.example.*
 
 class RejectedOrderCommandsProcessor : Processor<String, OrderCommand, String, OrderCommand> {
 
-    private lateinit var orderStore: KeyValueStore<String, Order>
-
     private lateinit var context: ProcessorContext<String, OrderCommand>
 
     override fun init(context: ProcessorContext<String, OrderCommand>?) {
         super.init(context)
-        orderStore = context!!.getStateStore("order-store")
-        this.context = context
+        this.context = context!!
     }
 
     override fun process(record: Record<String, OrderCommand>?) {
@@ -27,7 +24,6 @@ class RejectedOrderCommandsProcessor : Processor<String, OrderCommand, String, O
             command.copy(order = rejectedOrder),
             context.currentSystemTimeMs()
         )
-        orderStore.delete(command.orderId)
         context.forward(outRecord)
     }
 

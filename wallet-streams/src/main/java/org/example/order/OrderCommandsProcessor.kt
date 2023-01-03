@@ -5,6 +5,7 @@ import org.apache.kafka.streams.processor.api.Processor
 import org.apache.kafka.streams.processor.api.ProcessorContext
 import org.apache.kafka.streams.processor.api.Record
 import org.apache.kafka.streams.state.KeyValueStore
+import org.apache.kafka.streams.state.ReadOnlyKeyValueStore
 import org.apache.kafka.streams.state.StoreBuilder
 import org.apache.kafka.streams.state.Stores
 import org.example.Order
@@ -23,7 +24,7 @@ val orderStoreBuilder: StoreBuilder<*> = Stores.keyValueStoreBuilder(
 
 class OrderCommandsProcessor : Processor<String, OrderCommand, String, OrderCommand> {
 
-    private lateinit var orderStore: KeyValueStore<String, Order>
+    private lateinit var orderStore: ReadOnlyKeyValueStore<String, Order>
 
     private lateinit var context: ProcessorContext<String, OrderCommand>
 
