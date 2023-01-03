@@ -118,5 +118,13 @@ fun topology(): Topology {
         JsonSerde(WalletCommand::class.java).serializer(),
         "WalletCommandsProcessor"
     )
+
+    topology.addSink("WalletCommandsRejectedSink",
+        "wallet-commands-rejected",
+        Serdes.String().serializer(),
+        JsonSerde(WalletCommand::class.java).serializer(),
+        "WalletCommandsProcessor"
+    )
+
     return topology
 }

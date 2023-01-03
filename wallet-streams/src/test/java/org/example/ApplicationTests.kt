@@ -94,4 +94,46 @@ class ApplicationTests {
         assert(outputTopicRejected.isEmpty)
 
     }
+
+    @Test
+    fun `wallet command rejected comes to wallet-commands-rejected topic only and has REJECTED status`() {
+        val input = testDriver.createInputTopic("wallet-commands", Serdes.String().serializer(), JsonSerde(WalletCommand::class.java).serializer())
+        val inputStream = this::class.java.classLoader.getResourceAsStream("wallet-command-block.json")?.bufferedReader()?.readText()
+        val walletCommand = objectMapper.readValue(inputStream, WalletCommand::class.java)
+        val record = TestRecord(walletCommand.walletId, walletCommand)
+
+        input.pipeInput(record)
+
+        val outputTopicRejected = testDriver.createOutputTopic("wallet-commands-rejected", Serdes.String().deserializer(), JsonSerde(WalletCommand::class.java).deserializer())
+        assert(!outputTopicRejected.isEmpty)
+
+        val outputRecord = outputTopicRejected.readRecord()
+        assert(outputRecord.value.status == WalletCommandStatus.REJECTED)
+
+        val outputTopicConfirmed = testDriver.createOutputTopic("wallet-commands-confirmed", Serdes.String().deserializer(), JsonSerde(WalletCommand::class.java).deserializer())
+        assert(outputTopicConfirmed.isEmpty)
+
+
+    }
+
+    @Test
+    fun `wallet command confirmed comes to wallet-commands-confirmed topic only and has CONFIRMED status`() {
+        val input = testDriver.createInputTopic("wallet-commands", Serdes.String().serializer(), JsonSerde(WalletCommand::class.java).serializer())
+        val inputStream = this::class.java.classLoader.getResourceAsStream("wallet-command-credit.json")?.bufferedReader()?.readText()
+        val walletCommand = objectMapper.readValue(inputStream, WalletCommand::class.java)
+        val record = TestRecord(walletCommand.walletId, walletCommand)
+
+        input.pipeInput(record)
+
+        val outputTopicRejected = testDriver.createOutputTopic("wallet-commands-rejected", Serdes.String().deserializer(), JsonSerde(WalletCommand::class.java).deserializer())
+        assert(outputTopicRejected.isEmpty)
+
+
+        val outputTopicConfirmed = testDriver.createOutputTopic("wallet-commands-confirmed", Serdes.String().deserializer(), JsonSerde(WalletCommand::class.java).deserializer())
+        assert(!outputTopicConfirmed.isEmpty)
+
+        val outputRecord = outputTopicConfirmed.readRecord()
+        assert(outputRecord.value.status == WalletCommandStatus.CONFIRMED)
+
+    }
 }

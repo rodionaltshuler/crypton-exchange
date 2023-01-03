@@ -46,7 +46,7 @@ class WalletCommandProcessor : Processor<String, WalletCommand, String, WalletCo
                val record = Record(wallet.walletId,
                    command.copy(status = WalletCommandStatus.REJECTED, message = "Not enough ${asset.assetId} for ${command.causeId}, ${command.amount} required, ${asset.available()} available"),
                    context.currentSystemTimeMs())
-               context.forward(record)
+               context.forward(record, "WalletCommandsRejectedSink")
                return
            }
         }
@@ -79,7 +79,7 @@ class WalletCommandProcessor : Processor<String, WalletCommand, String, WalletCo
             command.copy(status = WalletCommandStatus.CONFIRMED),
             context.currentSystemTimeMs())
 
-        context.forward(record)
+        context.forward(record, "WalletCommandsConfirmedSink")
 
     }
 
