@@ -1,5 +1,6 @@
 package org.example.wallet
 
+import org.apache.kafka.common.header.internals.RecordHeaders
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.processor.api.Processor
 import org.apache.kafka.streams.processor.api.ProcessorContext
@@ -31,6 +32,7 @@ class WalletCommandProcessor : Processor<String, WalletCommand, String, WalletCo
     override fun process(record: Record<String, WalletCommand>?) {
 
         val command = record!!.value()
+        val headers = RecordHeaders(record.headers().filter { it.key() == "orderId" })
 
         walletStore.putIfAbsent(
             command.walletId,
@@ -45,7 +47,8 @@ class WalletCommandProcessor : Processor<String, WalletCommand, String, WalletCo
            if (asset.available() < command.amount) {
                val record = Record(wallet.walletId,
                    command.copy(status = WalletCommandStatus.REJECTED, message = "Not enough ${asset.assetId} for ${command.causeId}, ${command.amount} required, ${asset.available()} available"),
-                   context.currentSystemTimeMs())
+                   context.currentSystemTimeMs(),
+                   headers)
                context.forward(record, "WalletCommandsRejectedSink")
                return
            }
@@ -77,7 +80,8 @@ class WalletCommandProcessor : Processor<String, WalletCommand, String, WalletCo
 
         val record = Record(wallet.walletId,
             command.copy(status = WalletCommandStatus.CONFIRMED),
-            context.currentSystemTimeMs())
+            context.currentSystemTimeMs(),
+            headers)
 
         context.forward(record, "WalletCommandsConfirmedSink")
 

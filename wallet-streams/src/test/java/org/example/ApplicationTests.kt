@@ -136,4 +136,35 @@ class ApplicationTests {
         assert(outputRecord.value.status == WalletCommandStatus.CONFIRMED)
 
     }
+
+    @Test
+    fun `confirmed wallet command caused by order has orderId header`() {
+
+
+        val input = testDriver.createInputTopic("order-commands", Serdes.String().serializer(), JsonSerde(OrderCommand::class.java).serializer())
+        val inputStream = this::class.java.classLoader.getResourceAsStream("order-command.json")?.bufferedReader()?.readText()
+        val orderCommand = objectMapper.readValue(inputStream, OrderCommand::class.java)
+        val record = TestRecord(orderCommand.orderId, orderCommand)
+
+        val walletStore = testDriver.getKeyValueStore<String, Wallet>("wallet-store")
+        var wallet= Wallet(orderCommand.order.walletId, emptyMap())
+        val assets : Map<String, Asset> = wallet.assets + arrayOf(
+            orderCommand.order.baseAssetId to Asset(orderCommand.order.baseAssetId, orderCommand.order.qty * orderCommand.order.price, 0.0),
+            orderCommand.order.quoteAssetId to Asset(orderCommand.order.quoteAssetId, orderCommand.order.qty * orderCommand.order.price, 0.0)
+        )
+        wallet = wallet.copy(assets = assets)
+        walletStore.put(wallet.walletId, wallet)
+
+
+        input.pipeInput(record)
+
+        val outputTopic = testDriver.createOutputTopic("wallet-commands-confirmed", Serdes.String().deserializer(), JsonSerde(OrderCommand::class.java).deserializer())
+        val actualOutputRecord = outputTopic.readRecord()
+
+        val header = actualOutputRecord.headers().find { it.key() == "orderId" }
+
+        assert(header != null)
+        assert(String(header!!.value()) == orderCommand.orderId)
+
+    }
 }
