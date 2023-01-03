@@ -26,7 +26,8 @@ data class OrderCommand(
     val causeId: String,
     val command: OrderCommandType,
     val order: Order,
-    val message: String = ""
+    val message: String = "",
+    val fillQty: Double = 0.0
 )
 
 enum class OrderCommandType {

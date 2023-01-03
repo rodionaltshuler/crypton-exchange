@@ -11,6 +11,7 @@ import org.apache.kafka.streams.state.*
 import org.example.Order
 import org.example.OrderCommand
 import org.example.OrderCommandType.*
+import org.example.OrdersMatchCommand
 import org.example.WalletCommand
 import org.example.order.*
 import org.example.wallet.WalletCommandProcessor
@@ -142,6 +143,21 @@ fun topology(): Topology {
         JsonSerde(Order::class.java).serializer(),
         "ConfirmedOrderCommandsProcessor"
     )
+
+    topology.addSource("OrdersMatchSource",
+        Serdes.String().deserializer(),
+        JsonSerde(OrdersMatchCommand::class.java).deserializer(),
+        "order-match-commands")
+
+    topology.addProcessor("OrdersMatchProcessor",
+        ProcessorSupplier { OrdersMatchProcessor() }, "OrdersMatchSource")
+
+
+    topology.addSink("OrderCommandsSink",
+        "order-commands",
+        Serdes.String().serializer(),
+        JsonSerde(OrderCommand::class.java).serializer(),
+        "OrdersMatchProcessor")
 
     return topology
 }

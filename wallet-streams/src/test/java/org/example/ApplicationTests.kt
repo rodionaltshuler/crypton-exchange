@@ -201,4 +201,42 @@ class ApplicationTests {
         val orderCommandsStore = testDriver.getKeyValueStore<String, OrderCommand>("order-commands-store")
         assert(orderCommandsStore.get(orderCommand.id) == null)
     }
+
+    @Test
+    fun `OrderMatchCommand generates 2 order commands`() {
+        val input = testDriver.createInputTopic("order-match-commands", Serdes.String().serializer(), JsonSerde(OrdersMatchCommand::class.java).serializer())
+        val inputStream = this::class.java.classLoader.getResourceAsStream("order-match-command.json")?.bufferedReader()?.readText()
+        val matchCommand = objectMapper.readValue(inputStream, OrdersMatchCommand::class.java)
+
+        val record = TestRecord(matchCommand.matchId, matchCommand)
+
+        input.pipeInput(record)
+
+        val outputTopic = testDriver.createOutputTopic("order-commands", Serdes.String().deserializer(), JsonSerde(OrderCommand::class.java).deserializer())
+        assert(!outputTopic.isEmpty)
+
+        val records = outputTopic.readRecordsToList()
+        assert(records.size == 2)
+
+    }
+
+    @Test
+    fun `OrderMatchCommand generates order-commands-rejected or orders-confirmed for each orderCommand`() {
+
+        val input = testDriver.createInputTopic("order-match-commands", Serdes.String().serializer(), JsonSerde(OrdersMatchCommand::class.java).serializer())
+        val inputStream = this::class.java.classLoader.getResourceAsStream("order-match-command.json")?.bufferedReader()?.readText()
+        val matchCommand = objectMapper.readValue(inputStream, OrdersMatchCommand::class.java)
+
+        val record = TestRecord(matchCommand.matchId, matchCommand)
+
+        input.pipeInput(record)
+
+        val outputTopicRejected = testDriver.createOutputTopic("order-commands-rejected", Serdes.String().deserializer(), JsonSerde(OrderCommand::class.java).deserializer())
+        val outputTopicConfirmed = testDriver.createOutputTopic("orders-confirmed", Serdes.String().deserializer(), JsonSerde(Order::class.java).deserializer())
+
+        val recordsRejected = outputTopicRejected.readRecordsToList()
+        val recordsConfirmed = outputTopicConfirmed.readRecordsToList()
+        assert(recordsRejected.size + recordsConfirmed.size == 2)
+
+    }
 }
