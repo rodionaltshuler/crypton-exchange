@@ -1,22 +1,14 @@
-package org.example.match
+package org.example.orders_match.processing
 
 import org.apache.kafka.common.serialization.Serdes
-import org.apache.kafka.streams.KafkaStreams
 import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsBuilder
-import org.apache.kafka.streams.StreamsConfig
-import org.apache.kafka.streams.Topology
 import org.apache.kafka.streams.kstream.Consumed
 import org.apache.kafka.streams.kstream.Produced
-import org.apache.kafka.streams.state.*
-import org.example.OrderCommandType.*
-import org.example.OrdersMatchCommand
-import org.example.Wallet
-import org.example.WalletCommand
-import org.example.WalletOperation
+import org.example.domain.OrdersMatchCommand
+import org.example.domain.WalletCommand
+import org.example.domain.WalletOperation
 import org.springframework.kafka.support.serializer.JsonSerde
-import java.util.*
-import java.util.concurrent.CountDownLatch
 
 
 fun StreamsBuilder.orderMatchToWalletCommands() {

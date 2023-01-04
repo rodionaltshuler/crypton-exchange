@@ -1,13 +1,13 @@
-package org.example.match
+package org.example.orders_match.processing
 
 import org.apache.kafka.streams.processor.api.Processor
 import org.apache.kafka.streams.processor.api.ProcessorContext
 import org.apache.kafka.streams.processor.api.Record
-import org.example.OrderCommand
-import org.example.OrderCommandType
-import org.example.OrdersMatchCommand
+import org.example.domain.OrderCommand
+import org.example.domain.OrderCommandType
+import org.example.domain.OrdersMatchCommand
 
-class OrdersMatchProcessor : Processor<String, OrdersMatchCommand, String, OrderCommand> {
+class OrdersMatchExecutionProcessor : Processor<String, OrdersMatchCommand, String, OrderCommand> {
 
     private lateinit var context: ProcessorContext<String, OrderCommand>
     override fun init(context: ProcessorContext<String, OrderCommand>?) {

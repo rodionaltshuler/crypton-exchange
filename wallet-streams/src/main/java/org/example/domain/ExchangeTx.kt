@@ -1,4 +1,4 @@
-package org.example
+package org.example.domain
 
 data class ExchangeTx(
         //what left gives
@@ -10,7 +10,8 @@ data class ExchangeTx(
         //Left wallet - credit
 
         var leftCreditAsset = left.assets.getOrDefault(rightDebitAssetId,
-                Asset(rightDebitAssetId, 0.0, 0.0));
+                Asset(rightDebitAssetId, 0.0, 0.0)
+        );
 
         leftCreditAsset = leftCreditAsset.copy(amount = leftCreditAsset.amount + rightAmount);
 
@@ -34,7 +35,8 @@ data class ExchangeTx(
         //Right wallet - credit
 
         var rightCreditAsset = right.assets.getOrDefault(leftDebitAssetId,
-                Asset(leftDebitAssetId, 0.0, 0.0));
+                Asset(leftDebitAssetId, 0.0, 0.0)
+        );
 
         rightCreditAsset = rightCreditAsset.copy(amount = rightCreditAsset.amount + leftAmount);
 

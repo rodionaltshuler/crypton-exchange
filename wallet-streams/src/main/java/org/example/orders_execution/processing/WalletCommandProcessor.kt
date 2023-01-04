@@ -1,4 +1,4 @@
-package org.example.wallet
+package org.example.orders_execution.processing
 
 import org.apache.kafka.common.header.internals.RecordHeaders
 import org.apache.kafka.common.serialization.Serdes
@@ -8,7 +8,7 @@ import org.apache.kafka.streams.processor.api.Record
 import org.apache.kafka.streams.state.KeyValueStore
 import org.apache.kafka.streams.state.StoreBuilder
 import org.apache.kafka.streams.state.Stores
-import org.example.*
+import org.example.domain.*
 import org.springframework.kafka.support.serializer.JsonSerde
 
 

@@ -1,11 +1,10 @@
-package org.example.order
+package org.example.orders_execution.processing
 
 import org.apache.kafka.streams.processor.api.Processor
 import org.apache.kafka.streams.processor.api.ProcessorContext
 import org.apache.kafka.streams.processor.api.Record
 import org.apache.kafka.streams.state.KeyValueStore
-import org.example.*
-import java.util.*
+import org.example.domain.*
 
 
 class ConfirmedOrderCommandsProcessor : Processor<String, WalletCommand, String, Order> {

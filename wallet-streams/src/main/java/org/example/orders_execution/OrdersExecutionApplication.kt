@@ -1,4 +1,4 @@
-package org.example.match
+package org.example.orders_execution
 
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.KafkaStreams
@@ -8,14 +8,13 @@ import org.apache.kafka.streams.Topology
 import org.apache.kafka.streams.errors.LogAndContinueExceptionHandler
 import org.apache.kafka.streams.processor.api.ProcessorSupplier
 import org.apache.kafka.streams.state.*
-import org.example.Order
-import org.example.OrderCommand
-import org.example.OrderCommandType.*
-import org.example.OrdersMatchCommand
-import org.example.WalletCommand
-import org.example.order.*
-import org.example.wallet.WalletCommandProcessor
-import org.example.wallet.walletCommandProcessorStoreBuilder
+import org.example.domain.Order
+import org.example.domain.OrderCommand
+import org.example.domain.OrderCommandType.*
+import org.example.domain.WalletCommand
+import org.example.orders_execution.processing.*
+import org.example.orders_execution.processing.WalletCommandProcessor
+import org.example.orders_execution.processing.walletCommandProcessorStoreBuilder
 import org.springframework.kafka.support.serializer.JsonSerde
 import java.util.*
 import java.util.concurrent.CountDownLatch
@@ -32,22 +31,23 @@ object Application {
 
         val props = properties()
 
-        val topology = topology()
+        val topology = ordersExecutionTopology()
 
         println("TOPOLOGY: \n ${topology.describe()}")
 
-        val streams = KafkaStreams(topology, props)
+        val orderExecutionStreams = KafkaStreams(topology, props)
+
         val latch = CountDownLatch(1)
 
         // attach shutdown handler to catch control-c
-        Runtime.getRuntime().addShutdownHook(object : Thread("orders-match-stream-shutdown-hook") {
+        Runtime.getRuntime().addShutdownHook(object : Thread("orders-processing-stream-shutdown-hook") {
             override fun run() {
-                streams.close()
+                orderExecutionStreams.close()
                 latch.countDown()
             }
         })
         try {
-            streams.start()
+            orderExecutionStreams.start()
             latch.await()
         } catch (e: Throwable) {
             exitProcess(1)
@@ -60,7 +60,7 @@ object Application {
 
 fun properties(): Properties {
     val props = Properties()
-    props[StreamsConfig.APPLICATION_ID_CONFIG] = "orders-match-processing-application-stream"
+    props[StreamsConfig.APPLICATION_ID_CONFIG] = "orders-processing-application-stream"
     props[StreamsConfig.BOOTSTRAP_SERVERS_CONFIG] = "localhost:9092"
     props[StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG] = Serdes.String().javaClass
     props[StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG] = Serdes.String().javaClass
@@ -69,7 +69,7 @@ fun properties(): Properties {
         LogAndContinueExceptionHandler::class.java
     return props
 }
-fun topology(): Topology {
+fun ordersExecutionTopology(): Topology {
     val topology: Topology = StreamsBuilder().build()
 
     topology.addSource("OrderCommandsSource",
@@ -143,21 +143,6 @@ fun topology(): Topology {
         JsonSerde(Order::class.java).serializer(),
         "ConfirmedOrderCommandsProcessor"
     )
-
-    topology.addSource("OrdersMatchSource",
-        Serdes.String().deserializer(),
-        JsonSerde(OrdersMatchCommand::class.java).deserializer(),
-        "order-match-commands")
-
-    topology.addProcessor("OrdersMatchProcessor",
-        ProcessorSupplier { OrdersMatchProcessor() }, "OrdersMatchSource")
-
-
-    topology.addSink("OrderCommandsSink",
-        "order-commands",
-        Serdes.String().serializer(),
-        JsonSerde(OrderCommand::class.java).serializer(),
-        "OrdersMatchProcessor")
 
     return topology
 }

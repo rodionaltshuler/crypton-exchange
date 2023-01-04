@@ -1,14 +1,14 @@
-package org.example.order
+package org.example.orders_execution.processing
 
 import org.apache.kafka.common.header.internals.RecordHeader
 import org.apache.kafka.common.header.internals.RecordHeaders
 import org.apache.kafka.streams.processor.api.Processor
 import org.apache.kafka.streams.processor.api.ProcessorContext
 import org.apache.kafka.streams.processor.api.Record
-import org.example.OrderCommand
-import org.example.OrderCommandType
-import org.example.WalletCommand
-import org.example.WalletOperation
+import org.example.domain.OrderCommand
+import org.example.domain.OrderCommandType
+import org.example.domain.WalletCommand
+import org.example.domain.WalletOperation
 
 
 class OrderCommandsToWalletCommandsProcessor : Processor<String, OrderCommand, String, WalletCommand> {

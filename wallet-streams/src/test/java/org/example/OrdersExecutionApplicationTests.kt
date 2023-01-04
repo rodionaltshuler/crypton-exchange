@@ -5,21 +5,22 @@ import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.StreamsConfig
 import org.apache.kafka.streams.TopologyTestDriver
 import org.apache.kafka.streams.test.TestRecord
-import org.example.match.properties
-import org.example.match.topology
+import org.example.domain.*
+import org.example.orders_execution.properties
+import org.example.orders_execution.ordersExecutionTopology
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.kafka.support.serializer.JsonSerde
 
-class ApplicationTests {
+class OrdersExecutionApplicationTests {
 
     private lateinit var testDriver: TopologyTestDriver
 
     private val objectMapper = jacksonObjectMapper()
     @BeforeEach
     fun setup() {
-        val topology = topology()
+        val topology = ordersExecutionTopology()
         val props = properties()
         props[StreamsConfig.APPLICATION_ID_CONFIG] = "test"
         props[StreamsConfig.BOOTSTRAP_SERVERS_CONFIG] = "dummy:1234"
@@ -40,7 +41,8 @@ class ApplicationTests {
 
         input.pipeInput(record)
 
-        val outputTopic = testDriver.createOutputTopic("order-commands-rejected", Serdes.String().deserializer(), JsonSerde(OrderCommand::class.java).deserializer())
+        val outputTopic = testDriver.createOutputTopic("order-commands-rejected", Serdes.String().deserializer(), JsonSerde(
+            OrderCommand::class.java).deserializer())
         val actualOutputRecord = outputTopic.readKeyValue()
 
         assert(actualOutputRecord.value.order.status == OrderStatus.REJECTED)
@@ -55,7 +57,8 @@ class ApplicationTests {
 
         input.pipeInput(record)
 
-        val outputTopic = testDriver.createOutputTopic("wallet-commands", Serdes.String().deserializer(), JsonSerde(WalletCommand::class.java).deserializer())
+        val outputTopic = testDriver.createOutputTopic("wallet-commands", Serdes.String().deserializer(), JsonSerde(
+            WalletCommand::class.java).deserializer())
         assert(outputTopic.isEmpty)
     }
 
@@ -68,7 +71,8 @@ class ApplicationTests {
 
         input.pipeInput(record)
 
-        val outputTopic = testDriver.createOutputTopic("wallet-commands", Serdes.String().deserializer(), JsonSerde(WalletCommand::class.java).deserializer())
+        val outputTopic = testDriver.createOutputTopic("wallet-commands", Serdes.String().deserializer(), JsonSerde(
+            WalletCommand::class.java).deserializer())
         val actualOutputRecord = outputTopic.readRecord()
 
 
@@ -86,11 +90,13 @@ class ApplicationTests {
 
         input.pipeInput(record)
 
-        val outputTopic = testDriver.createOutputTopic("wallet-commands", Serdes.String().deserializer(), JsonSerde(WalletCommand::class.java).deserializer())
+        val outputTopic = testDriver.createOutputTopic("wallet-commands", Serdes.String().deserializer(), JsonSerde(
+            WalletCommand::class.java).deserializer())
         assert(!outputTopic.isEmpty)
 
 
-        val outputTopicRejected = testDriver.createOutputTopic("order-commands-rejected", Serdes.String().deserializer(), JsonSerde(OrderCommand::class.java).deserializer())
+        val outputTopicRejected = testDriver.createOutputTopic("order-commands-rejected", Serdes.String().deserializer(), JsonSerde(
+            OrderCommand::class.java).deserializer())
         assert(outputTopicRejected.isEmpty)
 
     }
@@ -104,13 +110,15 @@ class ApplicationTests {
 
         input.pipeInput(record)
 
-        val outputTopicRejected = testDriver.createOutputTopic("wallet-commands-rejected", Serdes.String().deserializer(), JsonSerde(WalletCommand::class.java).deserializer())
+        val outputTopicRejected = testDriver.createOutputTopic("wallet-commands-rejected", Serdes.String().deserializer(), JsonSerde(
+            WalletCommand::class.java).deserializer())
         assert(!outputTopicRejected.isEmpty)
 
         val outputRecord = outputTopicRejected.readRecord()
         assert(outputRecord.value.status == WalletCommandStatus.REJECTED)
 
-        val outputTopicConfirmed = testDriver.createOutputTopic("wallet-commands-confirmed", Serdes.String().deserializer(), JsonSerde(WalletCommand::class.java).deserializer())
+        val outputTopicConfirmed = testDriver.createOutputTopic("wallet-commands-confirmed", Serdes.String().deserializer(), JsonSerde(
+            WalletCommand::class.java).deserializer())
         assert(outputTopicConfirmed.isEmpty)
 
 
@@ -125,11 +133,13 @@ class ApplicationTests {
 
         input.pipeInput(record)
 
-        val outputTopicRejected = testDriver.createOutputTopic("wallet-commands-rejected", Serdes.String().deserializer(), JsonSerde(WalletCommand::class.java).deserializer())
+        val outputTopicRejected = testDriver.createOutputTopic("wallet-commands-rejected", Serdes.String().deserializer(), JsonSerde(
+            WalletCommand::class.java).deserializer())
         assert(outputTopicRejected.isEmpty)
 
 
-        val outputTopicConfirmed = testDriver.createOutputTopic("wallet-commands-confirmed", Serdes.String().deserializer(), JsonSerde(WalletCommand::class.java).deserializer())
+        val outputTopicConfirmed = testDriver.createOutputTopic("wallet-commands-confirmed", Serdes.String().deserializer(), JsonSerde(
+            WalletCommand::class.java).deserializer())
         assert(!outputTopicConfirmed.isEmpty)
 
         val outputRecord = outputTopicConfirmed.readRecord()
@@ -157,7 +167,8 @@ class ApplicationTests {
 
         input.pipeInput(record)
 
-        val outputTopic = testDriver.createOutputTopic("wallet-commands-confirmed", Serdes.String().deserializer(), JsonSerde(WalletCommand::class.java).deserializer())
+        val outputTopic = testDriver.createOutputTopic("wallet-commands-confirmed", Serdes.String().deserializer(), JsonSerde(
+            WalletCommand::class.java).deserializer())
         val actualOutputRecord = outputTopic.readRecord()
 
         val header = actualOutputRecord.headers().find { it.key() == "orderCommandId" }
@@ -187,7 +198,8 @@ class ApplicationTests {
 
         input.pipeInput(record)
 
-        val outputTopic = testDriver.createOutputTopic("orders-confirmed", Serdes.String().deserializer(), JsonSerde(Order::class.java).deserializer())
+        val outputTopic = testDriver.createOutputTopic("orders-confirmed", Serdes.String().deserializer(), JsonSerde(
+            Order::class.java).deserializer())
         val actualOutputRecord = outputTopic.readRecord()
         assert(actualOutputRecord.value != null)
         assert(actualOutputRecord.value.status == OrderStatus.CONFIRMED)
@@ -202,41 +214,35 @@ class ApplicationTests {
         assert(orderCommandsStore.get(orderCommand.id) == null)
     }
 
-    @Test
-    fun `OrderMatchCommand generates 2 order commands`() {
-        val input = testDriver.createInputTopic("order-match-commands", Serdes.String().serializer(), JsonSerde(OrdersMatchCommand::class.java).serializer())
-        val inputStream = this::class.java.classLoader.getResourceAsStream("order-match-command.json")?.bufferedReader()?.readText()
-        val matchCommand = objectMapper.readValue(inputStream, OrdersMatchCommand::class.java)
 
-        val record = TestRecord(matchCommand.matchId, matchCommand)
+
+    @Test
+    fun `order-command generates order-command-rejected or orders-confirmed`() {
+
+        val input = testDriver.createInputTopic("order-commands", Serdes.String().serializer(), JsonSerde(OrderCommand::class.java).serializer())
+        val inputStream = this::class.java.classLoader.getResourceAsStream("order-command.json")?.bufferedReader()?.readText()
+        val orderCommand = objectMapper.readValue(inputStream, OrderCommand::class.java)
+
+        val record = TestRecord(orderCommand.order.id, orderCommand)
 
         input.pipeInput(record)
 
-        val outputTopic = testDriver.createOutputTopic("order-commands", Serdes.String().deserializer(), JsonSerde(OrderCommand::class.java).deserializer())
-        assert(!outputTopic.isEmpty)
-
-        val records = outputTopic.readRecordsToList()
-        assert(records.size == 2)
-
-    }
-
-    @Test
-    fun `OrderMatchCommand generates order-commands-rejected or orders-confirmed for each orderCommand`() {
-
-        val input = testDriver.createInputTopic("order-match-commands", Serdes.String().serializer(), JsonSerde(OrdersMatchCommand::class.java).serializer())
-        val inputStream = this::class.java.classLoader.getResourceAsStream("order-match-command.json")?.bufferedReader()?.readText()
-        val matchCommand = objectMapper.readValue(inputStream, OrdersMatchCommand::class.java)
-
-        val record = TestRecord(matchCommand.matchId, matchCommand)
-
-        input.pipeInput(record)
-
-        val outputTopicRejected = testDriver.createOutputTopic("order-commands-rejected", Serdes.String().deserializer(), JsonSerde(OrderCommand::class.java).deserializer())
-        val outputTopicConfirmed = testDriver.createOutputTopic("orders-confirmed", Serdes.String().deserializer(), JsonSerde(Order::class.java).deserializer())
+        val outputTopicRejected = testDriver.createOutputTopic("order-commands-rejected", Serdes.String().deserializer(), JsonSerde(
+            OrderCommand::class.java).deserializer())
+        val outputTopicConfirmed = testDriver.createOutputTopic("orders-confirmed", Serdes.String().deserializer(), JsonSerde(
+            Order::class.java).deserializer())
 
         val recordsRejected = outputTopicRejected.readRecordsToList()
         val recordsConfirmed = outputTopicConfirmed.readRecordsToList()
-        assert(recordsRejected.size + recordsConfirmed.size == 2)
+
+        assert(recordsRejected.size + recordsConfirmed.size == 1)
+
+        //FIXME test fails because if wallet command related to this order is rejected, it doesn't generate order-command-rejected
+        //Proof: following modification passes, and there is no connection in topology between wallet-commands-rejected -> order-commands-rejected
+        //val outputTopicWalletCommandRejected = testDriver.createOutputTopic("wallet-commands-rejected", Serdes.String().deserializer(), JsonSerde(WalletCommand::class.java).deserializer())
+        //val walletCommandsRejected = outputTopicWalletCommandRejected.readRecordsToList()
+        //assert(recordsRejected.size + recordsConfirmed.size + walletCommandsRejected.size == 1)
+
 
     }
 }

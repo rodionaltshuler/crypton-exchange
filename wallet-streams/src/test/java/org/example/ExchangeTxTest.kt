@@ -1,6 +1,8 @@
 package org.example
 
-import org.example.Wallet.Companion.withAsset
+import org.example.domain.Asset
+import org.example.domain.ExchangeTx
+import org.example.domain.Wallet.Companion.withAsset
 import org.junit.jupiter.api.Test
 
 class ExchangeTxTest {

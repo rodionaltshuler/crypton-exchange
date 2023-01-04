@@ -1,4 +1,4 @@
-package org.example
+package org.example.domain
 
 data class Wallet(val walletId: String, val assets: Map<String, Asset>, val txCount : Long = 0) {
     companion object {

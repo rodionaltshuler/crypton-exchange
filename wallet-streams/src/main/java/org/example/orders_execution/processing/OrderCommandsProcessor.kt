@@ -1,4 +1,4 @@
-package org.example.order
+package org.example.orders_execution.processing
 
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.processor.api.Processor
@@ -8,10 +8,10 @@ import org.apache.kafka.streams.state.KeyValueStore
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore
 import org.apache.kafka.streams.state.StoreBuilder
 import org.apache.kafka.streams.state.Stores
-import org.example.Order
-import org.example.OrderCommand
-import org.example.OrderCommandType
-import org.example.OrderStatus
+import org.example.domain.Order
+import org.example.domain.OrderCommand
+import org.example.domain.OrderCommandType
+import org.example.domain.OrderStatus
 import org.springframework.kafka.support.serializer.JsonSerde
 
 

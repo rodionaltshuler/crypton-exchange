@@ -1,4 +1,4 @@
-package org.example
+package org.example.domain
 
 enum class OrderType {
     LIMIT_SELL, LIMIT_BUY
