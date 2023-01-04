@@ -90,13 +90,26 @@ class OrderCommandsProcessor : Processor<String, OrderCommand, String, OrderComm
                 //FIXME check state store if this order exists and confirmed
 
                 val existingOrder = orderStore.get(command.orderId)
-                if (existingOrder != null && existingOrder.status == OrderStatus.CONFIRMED) {
-                    val orderCommand = Record(
-                        command.orderId,
-                        command,
-                        context.currentSystemTimeMs()
-                    )
-                    context.forward(orderCommand, "OrderCommandToWalletCommandsProcessor")
+
+                if (existingOrder != null &&
+                    existingOrder.status == OrderStatus.CONFIRMED
+                ) {
+
+                    if (existingOrder.qty <= command.fillQty) {
+                        val orderCommand = Record(
+                            command.orderId,
+                            command,
+                            context.currentSystemTimeMs()
+                        )
+                        context.forward(orderCommand, "OrderCommandToWalletCommandsProcessor")
+                    } else {
+                        val rejectedOrderCommand = Record(
+                            command.orderId,
+                            command.copy(message = "Fill qty ${command.fillQty} is more than order qty ${existingOrder.qty} "),
+                            context.currentSystemTimeMs()
+                        )
+                        context.forward(rejectedOrderCommand, "RejectedOrderCommandsProcessor")
+                    }
 
                 } else {
                     val rejectedOrderCommand = Record(

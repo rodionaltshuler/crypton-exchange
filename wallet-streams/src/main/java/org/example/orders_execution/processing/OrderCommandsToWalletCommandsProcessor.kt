@@ -31,9 +31,9 @@ class OrderCommandsToWalletCommandsProcessor : Processor<String, OrderCommand, S
                             id = command.id + "-" + WalletOperation.RELEASE,
                             causeId = command.orderId,
                             walletId = command.order.walletId,
-                            assetId = command.order.baseAssetId,
+                            assetId = command.order.assetToBlock(),
                             operation = WalletOperation.BLOCK,
-                            amount = command.order.price * command.order.qty
+                            amount = command.order.amountToBlock()
                         )
                     )
                 } //block funds
@@ -43,9 +43,9 @@ class OrderCommandsToWalletCommandsProcessor : Processor<String, OrderCommand, S
                             id = command.id + "-" + WalletOperation.RELEASE,
                             causeId = command.orderId,
                             walletId = command.order.walletId,
-                            assetId = command.order.baseAssetId,
+                            assetId = command.order.assetToBlock(),
                             operation = WalletOperation.RELEASE,
-                            amount = command.order.price * command.order.qty
+                            amountRelease = command.order.amountToBlock()
                         )
                     )
                 } //release funds
@@ -55,18 +55,19 @@ class OrderCommandsToWalletCommandsProcessor : Processor<String, OrderCommand, S
                             id = command.id + "-" + WalletOperation.CREDIT,
                             causeId = command.orderId,
                             walletId = command.order.walletId,
-                            assetId = command.order.quoteAssetId,
+                            assetId = command.order.assetToCredit(),
                             operation = WalletOperation.CREDIT,
-                            amount = command.order.price * command.order.qty
+                            amount = command.order.amountToCredit(fillPrice = command.fillPrice, fillQty = command.fillQty)
                         ),
 
                         WalletCommand(
                             id = command.id + "-" + WalletOperation.RELEASE_AND_DEBIT,
                             causeId = command.orderId,
                             walletId = command.order.walletId,
-                            assetId = command.order.baseAssetId,
+                            assetId = command.order.assetToDebit(),
                             operation = WalletOperation.RELEASE_AND_DEBIT,
-                            amount = command.order.price * command.order.qty
+                            amount = command.order.amountToDebit(fillPrice = command.fillPrice, fillQty = command.fillQty),
+                            amountRelease = command.order.amountReleaseOnFill(fillQty = command.fillQty)
                         )
                     )
                 } //unblock and debit one asset and credit another

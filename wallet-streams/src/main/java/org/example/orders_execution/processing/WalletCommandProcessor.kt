@@ -60,7 +60,7 @@ class WalletCommandProcessor : Processor<String, WalletCommand, String, WalletCo
             WalletOperation.RELEASE_AND_DEBIT -> { asset: Asset ->
                 //FIXME release amount could be more than debit amount
                 asset.copy(
-                    blocked = asset.blocked - command.amount,
+                    blocked = asset.blocked - command.amountRelease,
                     amount = asset.amount - command.amount
                 )
             }
@@ -68,7 +68,9 @@ class WalletCommandProcessor : Processor<String, WalletCommand, String, WalletCo
             WalletOperation.CREDIT -> { asset: Asset -> asset.copy(amount = asset.amount + command.amount) }
             WalletOperation.DEBIT -> { asset: Asset -> asset.copy(amount = asset.amount - command.amount) }
             WalletOperation.BLOCK -> { asset: Asset -> asset.copy(blocked = asset.blocked + command.amount) }
-            WalletOperation.RELEASE -> { asset: Asset -> asset.copy(blocked = asset.blocked - command.amount) }
+            WalletOperation.RELEASE -> {
+                    asset: Asset -> asset.copy(blocked = asset.blocked - command.amountRelease)
+            }
         }
 
 
