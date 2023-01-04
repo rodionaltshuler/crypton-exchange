@@ -28,7 +28,7 @@ class OrderCommandsToWalletCommandsProcessor : Processor<String, OrderCommand, S
                 OrderCommandType.SUBMIT -> {
                     listOf(
                         WalletCommand(
-                            id = command.id + "-" + WalletOperation.UNBLOCK,
+                            id = command.id + "-" + WalletOperation.RELEASE,
                             causeId = command.orderId,
                             walletId = command.order.walletId,
                             assetId = command.order.baseAssetId,
@@ -40,11 +40,11 @@ class OrderCommandsToWalletCommandsProcessor : Processor<String, OrderCommand, S
                 OrderCommandType.CANCEL -> {
                     listOf(
                         WalletCommand(
-                            id = command.id + "-" + WalletOperation.UNBLOCK,
+                            id = command.id + "-" + WalletOperation.RELEASE,
                             causeId = command.orderId,
                             walletId = command.order.walletId,
                             assetId = command.order.baseAssetId,
-                            operation = WalletOperation.UNBLOCK,
+                            operation = WalletOperation.RELEASE,
                             amount = command.order.price * command.order.qty
                         )
                     )

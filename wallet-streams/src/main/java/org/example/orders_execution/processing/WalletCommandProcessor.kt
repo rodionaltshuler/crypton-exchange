@@ -68,7 +68,7 @@ class WalletCommandProcessor : Processor<String, WalletCommand, String, WalletCo
             WalletOperation.CREDIT -> { asset: Asset -> asset.copy(amount = asset.amount + command.amount) }
             WalletOperation.DEBIT -> { asset: Asset -> asset.copy(amount = asset.amount - command.amount) }
             WalletOperation.BLOCK -> { asset: Asset -> asset.copy(blocked = asset.blocked + command.amount) }
-            WalletOperation.UNBLOCK -> { asset: Asset -> asset.copy(blocked = asset.blocked - command.amount) }
+            WalletOperation.RELEASE -> { asset: Asset -> asset.copy(blocked = asset.blocked - command.amount) }
         }
 
 
