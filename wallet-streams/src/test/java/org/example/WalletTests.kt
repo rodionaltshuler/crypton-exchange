@@ -42,7 +42,7 @@ class WalletTests {
 
         val order = orderCommand.order!! //BTC-ETH: buying 10 ETH price 0.05 -> expect to block 0.5 BTC
         val btcInitialAmount = 10.0
-        fundWallet(order.walletId, btcInitialAmount, 0.0, order.baseAssetId)
+        testDriver.fundWallet(order.walletId, btcInitialAmount, 0.0, order.baseAssetId)
 
         input.pipeInput(record)
 
@@ -62,7 +62,7 @@ class WalletTests {
 
         val order = orderCommand.order!! //BTC-ETH: buying 10 ETH price 0.05 -> expect to block 0.5 BTC
         //making sure balance is 0
-        fundWallet(order.walletId, 0.0, 0.0, order.baseAssetId)
+        testDriver.fundWallet(order.walletId, 0.0, 0.0, order.baseAssetId)
 
         input.pipeInput(record)
 
@@ -91,7 +91,7 @@ class WalletTests {
         val order = orderCommand.order!! //BTC-ETH: buying 10 ETH price 0.05 -> expect to block 0.5 BTC
         val btcInitialAmount = 10.0
         val btcBlocked = 0.5
-        fundWallet(order.walletId, btcInitialAmount, 0.0, order.baseAssetId)
+        testDriver.fundWallet(order.walletId, btcInitialAmount, 0.0, order.baseAssetId)
 
         input.pipeInput(record)
 
@@ -117,7 +117,7 @@ class WalletTests {
         val btcInitialAmount = 10.0
         val btcInitiallyBlocked = 1.0 //BTC-ETH: buying 10 ETH price 0.05 -> expect to release 0.5 BTC
         val btcBlockedAfterRelease = 1.0 - 0.5
-        fundWallet(order.walletId, btcInitialAmount, btcInitiallyBlocked, order.baseAssetId)
+        testDriver.fundWallet(order.walletId, btcInitialAmount, btcInitiallyBlocked, order.baseAssetId)
 
         input.pipeInput(record)
 
@@ -151,15 +151,5 @@ class WalletTests {
         assert(false) { "Not implemented" }
     }
 
-    private fun fundWallet(walletId: String, amount: Double, blocked: Double = 0.0, vararg assetIds: String){
-        val walletStore = testDriver.getKeyValueStore<String, Wallet>("wallet-store")
-        var wallet= Wallet(walletId, emptyMap())
-
-
-        val assets : Map<String, Asset> = wallet.assets + assetIds.map { Pair(it, Asset(it, amount, blocked)) }
-
-        wallet = wallet.copy(assets = assets)
-        walletStore.put(wallet.walletId, wallet)
-
-    }
 }
+

@@ -199,7 +199,7 @@ class OrdersExecutionApplicationTests {
 
 
         val orderCommandsStore = testDriver.getKeyValueStore<String, OrderCommand>("order-commands-store")
-        assert(orderCommandsStore.get(orderCommand.id) == null)
+        assert(orderCommandsStore.get(orderCommand.id) == null) { "OrderCommands clean-up not implemented "}
     }
 
 
@@ -242,8 +242,44 @@ class OrdersExecutionApplicationTests {
 
     @Test
     fun `partially filled order is modified in the order-store`(){
-        //TODO implement
-        assert(false) { "Not implemented" }
+
+        val input = testDriver.createInputTopic("order-commands", Serdes.String().serializer(), JsonSerde(OrderCommand::class.java).serializer())
+        val inputStream = this::class.java.classLoader.getResourceAsStream("order-command-partial-fill.json")?.bufferedReader()?.readText()
+        val orderCommand = objectMapper.readValue(inputStream, OrderCommand::class.java)
+        val order: Order = orderCommand.order!!
+
+        //we have confirmed order
+        val orderStore = testDriver.getKeyValueStore<String, Order>("order-store")
+        orderStore.put(order.id, order)
+
+        //we have a wallet with blocked amount for that order
+        assert(order.assetToBlock() == "BTC")
+        assert(order.amountToBlock() == 2.0)
+        assert(order.qty == 10.0)
+
+        testDriver.fundWallet(walletId = order.walletId, amount = 2.0, blocked = 2.0, assetIds = arrayOf("BTC") )
+
+        val walletStore = testDriver.getKeyValueStore<String, Wallet>("wallet-store")
+        val walletBefore = walletStore.get(order.walletId)
+        assert(walletBefore.assets["BTC"]!!.blocked == 2.0)
+        assert(walletBefore.assets["BTC"]!!.amount == 2.0)
+
+        val record = TestRecord(orderCommand.orderId, orderCommand)
+        input.pipeInput(record)
+
+        val partiallyFilledOrder = orderStore.get(order.id)
+        assert(orderCommand.fillQty == 3.5)
+        assert(orderCommand.fillPrice == 0.15)
+
+        //gets filled twice as 2 wallet commands processing
+        assert(partiallyFilledOrder.qty == 10.0 - 3.5)
+        assert(partiallyFilledOrder.qtyFilled == 3.5)
+
+        val walletAfter = walletStore.get(order.walletId)
+        assert(walletAfter.assets["BTC"]!!.blocked == 2.0 - (3.5 * 0.2)) //block amount calculated with order price
+        assert(walletAfter.assets["BTC"]!!.amount == 2.0 - (3.5 * 0.15)) //actual amount debited with fill price
+        assert(walletAfter.assets["ETH"]!!.amount == 3.5)
+        assert(walletAfter.assets["ETH"]!!.blocked == 0.0)
     }
 
     @Test

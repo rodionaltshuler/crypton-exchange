@@ -93,7 +93,7 @@ class OrderCommandsProcessor : Processor<String, OrderCommand, String, OrderComm
                     existingOrder.status == OrderStatus.CONFIRMED
                 ) {
 
-                    if (existingOrder.qty <= command.fillQty) {
+                    if (command.fillQty <= existingOrder.qty) {
                         val orderCommand = Record(
                             command.orderId,
                             command,

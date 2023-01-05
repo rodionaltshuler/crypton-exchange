@@ -24,6 +24,7 @@ class ConfirmedOrderCommandsProcessor : Processor<String, WalletCommand, String,
 
     override fun process(record: Record<String, WalletCommand>?) {
         val orderCommandIdHeader = record!!.headers().find { it.key() == "orderCommandId" }
+        val walletCommand = record.value()!!
 
         if (orderCommandIdHeader != null) {
             val orderCommandId = String(orderCommandIdHeader.value())
@@ -41,39 +42,34 @@ class ConfirmedOrderCommandsProcessor : Processor<String, WalletCommand, String,
                 }
 
                 OrderCommandType.FILL -> {
-                    //taking the order from the store, because regardless one command says
-                    // (it might not have order data at all) - we have approved the order which is in the store
                     val existingOrder: Order = orderStore.get(orderId)
-                    if (orderCommand.fillQty == existingOrder.qty) {
-                        //order is fully filled - we don't need it anymore
-                        null
-                    } else {
-                        //partial fill
+                    if (walletCommand.operation.shouldModifyOrderOnFill) {
                         existingOrder.copy(
                             qty = existingOrder.qty - orderCommand.fillQty,
                             qtyFilled = existingOrder.qtyFilled + orderCommand.fillQty
                         )
+                    } else {
+                        existingOrder
                     }
-
                 }
             }
 
+            val outRecord = Record(
+                orderId,
+                order,
+                context.currentSystemTimeMs()
+            )
+            context.forward(outRecord)
+
             if (order != null) {
                 orderStore.put(order.id, order)
-                val outRecord = Record(
-                    orderId,
-                    order,
-                    context.currentSystemTimeMs()
-                )
-                context.forward(outRecord)
+
             } else {
                 orderStore.delete(orderId)
             }
 
-            //don't need order command anymore
-            orderCommandsStore.delete(orderCommandId)
-
-
+            //don't need order command anymore - we actually need, as orderCommand used by multiple wallet commands
+            //orderCommandsStore.delete(orderCommandId)
 
         }
 
