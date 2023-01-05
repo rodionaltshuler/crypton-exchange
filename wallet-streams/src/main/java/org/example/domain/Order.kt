@@ -8,7 +8,7 @@ enum class OrderType {
 //When Order rejected, filled or cancelled, it should be just removed from order store
 //REJECTED status should be applied to OrderCommand instead
 enum class OrderStatus {
-    NEW, CONFIRMED, REJECTED, CANCELLED, FILLED
+    NEW, CONFIRMED
 }
 
 data class Order(

@@ -48,18 +48,18 @@ class OrderCommandsProcessor : Processor<String, OrderCommand, String, OrderComm
         orderCommandsStore.put(command.id, command)
         when (command.command) {
             OrderCommandType.SUBMIT -> {
-                if (command.order.status == OrderStatus.NEW) {
+                val existingOrder = orderStore.get(command.orderId)
+                if (existingOrder == null) {
                     val orderCommand = Record(
                         command.orderId,
                         command,
                         context.currentSystemTimeMs()
                     )
                     context.forward(orderCommand, "OrderCommandToWalletCommandsProcessor")
-
                 } else {
                     val rejectedOrderCommand = Record(
                         command.orderId,
-                        command.copy(message = "SUBMIT command is applicable only to NEW orders"),
+                        command.copy(message = "SUBMIT command for the order which already exists"),
                         context.currentSystemTimeMs()
                     )
                     context.forward(rejectedOrderCommand, "RejectedOrderCommandsProcessor")
@@ -87,8 +87,6 @@ class OrderCommandsProcessor : Processor<String, OrderCommand, String, OrderComm
 
             } //release funds
             OrderCommandType.FILL -> {
-                //FIXME check state store if this order exists and confirmed
-
                 val existingOrder = orderStore.get(command.orderId)
 
                 if (existingOrder != null &&

@@ -132,7 +132,7 @@ fun ordersExecutionTopology(): Topology {
 
     topology.addProcessor("ConfirmedOrderCommandsProcessor", ProcessorSupplier { ConfirmedOrderCommandsProcessor() }, "WalletCommandsConfirmedSource")
 
-    topology.addStateStore(orderStoreBuilder, "OrderCommandsProcessor", "ConfirmedOrderCommandsProcessor")
+    topology.addStateStore(orderStoreBuilder, "OrderCommandToWalletCommandsProcessor", "OrderCommandsProcessor", "ConfirmedOrderCommandsProcessor")
 
     topology.addStateStore(orderCommandsStoreBuilder, "OrderCommandsProcessor", "RejectedOrderCommandsProcessor", "ConfirmedOrderCommandsProcessor")
 

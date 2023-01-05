@@ -40,7 +40,7 @@ class WalletTests {
 
         val record = TestRecord(orderCommand.orderId, orderCommand)
 
-        val order = orderCommand.order //BTC-ETH: buying 10 ETH price 0.05 -> expect to block 0.5 BTC
+        val order = orderCommand.order!! //BTC-ETH: buying 10 ETH price 0.05 -> expect to block 0.5 BTC
         val btcInitialAmount = 10.0
         fundWallet(order.walletId, btcInitialAmount, 0.0, order.baseAssetId)
 
@@ -60,7 +60,7 @@ class WalletTests {
 
         val record = TestRecord(orderCommand.orderId, orderCommand)
 
-        val order = orderCommand.order //BTC-ETH: buying 10 ETH price 0.05 -> expect to block 0.5 BTC
+        val order = orderCommand.order!! //BTC-ETH: buying 10 ETH price 0.05 -> expect to block 0.5 BTC
         //making sure balance is 0
         fundWallet(order.walletId, 0.0, 0.0, order.baseAssetId)
 
@@ -88,7 +88,7 @@ class WalletTests {
 
         val record = TestRecord(orderCommand.orderId, orderCommand)
 
-        val order = orderCommand.order //BTC-ETH: buying 10 ETH price 0.05 -> expect to block 0.5 BTC
+        val order = orderCommand.order!! //BTC-ETH: buying 10 ETH price 0.05 -> expect to block 0.5 BTC
         val btcInitialAmount = 10.0
         val btcBlocked = 0.5
         fundWallet(order.walletId, btcInitialAmount, 0.0, order.baseAssetId)
@@ -107,8 +107,8 @@ class WalletTests {
         val input = testDriver.createInputTopic("order-commands", Serdes.String().serializer(), JsonSerde(OrderCommand::class.java).serializer())
         val inputStream = this::class.java.classLoader.getResourceAsStream("order-command-cancel.json")?.bufferedReader()?.readText()
         val orderCommand = objectMapper.readValue(inputStream, OrderCommand::class.java)
-        val record = TestRecord(orderCommand.orderId, orderCommand)
-        val order = orderCommand.order
+        val record = TestRecord(orderCommand.orderId, orderCommand.copy(order = null))
+        val order = orderCommand.order!!
 
         //putting the order in store so we can cancel it
         val orderStore = testDriver.getKeyValueStore<String, Order>("order-store")
@@ -130,21 +130,25 @@ class WalletTests {
     @Test
     fun `LIMIT_BUY fill - proper asset released, debited and credited`(){
         //TODO implement
+        assert(false) { "Not implemented" }
     }
 
     @Test
     fun `LIMIT_BUY fill - order removed from order-store`(){
         //TODO implement
+        assert(false) { "Not implemented" }
     }
 
     @Test
     fun `LIMIT_BUY partial fill - proper asset released, debited and credited`(){
         //TODO implement
+        assert(false) { "Not implemented" }
     }
 
     @Test
     fun `LIMIT_BUY partial fill - order modified in order-store`(){
         //TODO implement
+        assert(false) { "Not implemented" }
     }
 
     private fun fundWallet(walletId: String, amount: Double, blocked: Double = 0.0, vararg assetIds: String){

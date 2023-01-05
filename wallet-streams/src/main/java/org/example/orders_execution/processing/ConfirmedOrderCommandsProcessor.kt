@@ -33,44 +33,47 @@ class ConfirmedOrderCommandsProcessor : Processor<String, WalletCommand, String,
             val order = when (orderCommand.command) {
                 OrderCommandType.SUBMIT -> {
                     //if order has just been submitted, it's not in the store, so we're constructing it from the command
-                    orderCommand.order.copy(status = OrderStatus.CONFIRMED)
+                    orderCommand.order!!.copy(status = OrderStatus.CONFIRMED)
                 }
 
                 OrderCommandType.CANCEL -> {
-                    //taking the order from the store, because regardless one command says
-                    // (it might not have order data at all) - we have approved the order which is in the store
-                    val order = orderStore.get(orderId)
-                    order.copy(status = OrderStatus.CANCELLED)
+                    null
                 }
 
                 OrderCommandType.FILL -> {
                     //taking the order from the store, because regardless one command says
                     // (it might not have order data at all) - we have approved the order which is in the store
-                    val order = orderStore.get(orderId)
-                    order.copy(status = OrderStatus.FILLED)
+                    val existingOrder: Order = orderStore.get(orderId)
+                    if (orderCommand.fillQty == existingOrder.qty) {
+                        //order is fully filled - we don't need it anymore
+                        null
+                    } else {
+                        //partial fill
+                        existingOrder.copy(
+                            qty = existingOrder.qty - orderCommand.fillQty,
+                            qtyFilled = existingOrder.qtyFilled + orderCommand.fillQty
+                        )
+                    }
+
                 }
             }
 
-            when (order.status) {
-                OrderStatus.CONFIRMED -> {
-                    orderStore.put(order.id, order)
-                }
-
-                else -> {
-                    orderStore.delete(orderId)
-                }
+            if (order != null) {
+                orderStore.put(order.id, order)
+                val outRecord = Record(
+                    orderId,
+                    order,
+                    context.currentSystemTimeMs()
+                )
+                context.forward(outRecord)
+            } else {
+                orderStore.delete(orderId)
             }
 
             //don't need order command anymore
             orderCommandsStore.delete(orderCommandId)
 
-            val outRecord = Record(
-                orderId,
-                order,
-                context.currentSystemTimeMs()
-            )
 
-            context.forward(outRecord)
 
         }
 

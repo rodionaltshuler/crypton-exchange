@@ -5,7 +5,6 @@ import org.apache.kafka.streams.processor.api.ProcessorContext
 import org.apache.kafka.streams.processor.api.Record
 import org.apache.kafka.streams.state.KeyValueStore
 import org.example.domain.OrderCommand
-import org.example.domain.OrderStatus
 
 
 class RejectedOrderCommandsProcessor : Processor<String, OrderCommand, String, OrderCommand> {
@@ -22,10 +21,9 @@ class RejectedOrderCommandsProcessor : Processor<String, OrderCommand, String, O
 
     override fun process(record: Record<String, OrderCommand>?) {
         val command = record!!.value()
-        val rejectedOrder = command.order.copy(status = OrderStatus.REJECTED)
         val outRecord = Record(
             command.orderId,
-            command.copy(order = rejectedOrder),
+            command,
             context.currentSystemTimeMs()
         )
         orderCommandsStore.delete(command.id)
