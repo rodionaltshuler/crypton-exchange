@@ -44,9 +44,14 @@ class ConfirmedOrderCommandsProcessor : Processor<String, WalletCommand, String,
                 OrderCommandType.FILL -> {
                     val existingOrder: Order = orderStore.get(orderId)
                     if (walletCommand.operation.shouldModifyOrderOnFill) {
+                        val status =when (existingOrder.qty == orderCommand.fillQty) {
+                            true -> OrderStatus.FILLED
+                            else -> OrderStatus.PARTIALLY_FILLED
+                        }
                         existingOrder.copy(
                             qty = existingOrder.qty - orderCommand.fillQty,
-                            qtyFilled = existingOrder.qtyFilled + orderCommand.fillQty
+                            qtyFilled = existingOrder.qtyFilled + orderCommand.fillQty,
+                            status = status
                         )
                     } else {
                         existingOrder

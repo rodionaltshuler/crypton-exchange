@@ -90,7 +90,7 @@ class OrderCommandsProcessor : Processor<String, OrderCommand, String, OrderComm
                 val existingOrder = orderStore.get(command.orderId)
 
                 if (existingOrder != null &&
-                    existingOrder.status == OrderStatus.CONFIRMED
+                    setOf(OrderStatus.CONFIRMED, OrderStatus.PARTIALLY_FILLED).contains(existingOrder.status)
                 ) {
 
                     if (command.fillQty <= existingOrder.qty) {

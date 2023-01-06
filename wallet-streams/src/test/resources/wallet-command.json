@@ -4,5 +4,5 @@
   "walletId": "wallet_1",
   "assetId": "BTC",
   "operation": "CREDIT",
-  "amount": 1.6
+  "amount": 10.0
 }
