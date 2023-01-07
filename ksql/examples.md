@@ -1,47 +1,31 @@
+### Create new ksql migrations project
+```
+docker exec ksqldb-server ksql-migrations new-project /share/ksql-migrations http://localhost:8088
+```
+
+### Initialize migrations metadata
+```
+docker exec ksqldb-server ksql-migrations --config-file /share/ksql-migrations/ksql-migrations.properties initialize-metadata
+```
+
+### Apply migrations
+```
+docker exec ksqldb-server ksql-migrations --config-file /share/ksql-migrations/ksql-migrations.properties apply --all
+```
+
+### Evaluate what migrations are to be applied
+```
+docker exec ksqldb-server ksql-migrations --config-file /share/ksql-migrations/ksql-migrations.properties apply --all --dry-run
+```
+
 
 ### Print messages in the topic
 `PRINT "order-confirmed" FROM BEGINNING;`
 
-### Create ksql table 
-
-CREATE TABLE WALLETS (
-walletId VARCHAR PRIMARY KEY, 
-assets MAP<VARCHAR, STRUCT<assetId VARCHAR, amount DOUBLE, blocked DOUBLE>>) 
-WITH (
-KAFKA_TOPIC = 'orders-processing-application-stream-wallet-store-changelog',
-VALUE_FORMAT = 'JSON'
-);
-
-### Make queryable table from it
-
-CREATE TABLE QUERYABLE_WALLETS AS SELECT * FROM WALLETS;
-
-### ...and query it!
-SELECT * FROM QUERYABLE_WALLETS;
-
-
-### Orders
-
-CREATE TABLE ORDERS (
-id VARCHAR PRIMARY KEY,
-baseAssetId VARCHAR,
-quoteAssetId VARCHAR,
-walletId VARCHAR,
-orderType VARCHAR,
-price DOUBLE,
-qty DOUBLE,
-qtyFilled DOUBLE,
-status VARCHAR)
-WITH (
-KAFKA_TOPIC = 'orders-processing-application-stream-order-store-changelog',
-VALUE_FORMAT = 'JSON'
-);
-
-CREATE TABLE QUERYABLE_ORDERS AS SELECT * FROM ORDERS;
-
+### Push query
 SELECT * FROM QUERYABLE_ORDERS EMIT CHANGES;
 
-### Query order book
+### Query order book via REST API (pull query)
 ```
 curl -X "POST" "http://localhost:8088/query-stream" \
 -d $'{

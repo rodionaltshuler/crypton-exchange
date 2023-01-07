@@ -49,6 +49,8 @@ services:
       KSQL_KSQL_LOGGING_PROCESSING_TOPIC_REPLICATION_FACTOR: 1
       KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: 'true'
       KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: 'true'
+    volumes:
+      - ./ksql/migrations:/share/ksql-migrations
 
   ksqldb-cli:
     image: confluentinc/cp-ksqldb-cli:7.3.0
