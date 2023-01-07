@@ -55,6 +55,7 @@ class OrderCommandsToWalletCommandsProcessor : Processor<String, OrderCommand, S
                 } //release funds
                 OrderCommandType.FILL -> {
                     order = orderStore.get(command.orderId)
+                    //order of commands is important -> order confirmed after RELEASE_AND_DEBIT
                     listOf(
                         WalletCommand(
                             id = command.id + "-" + WalletOperation.CREDIT,

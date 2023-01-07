@@ -44,7 +44,7 @@ class ConfirmedOrderCommandsProcessor : Processor<String, WalletCommand, String,
                 OrderCommandType.FILL -> {
                     val existingOrder: Order = orderStore.get(orderId)
                     if (walletCommand.operation.shouldModifyOrderOnFill) {
-                        val status =when (existingOrder.qty == orderCommand.fillQty) {
+                        val status = when (existingOrder.qty == orderCommand.fillQty) {
                             true -> OrderStatus.FILLED
                             else -> OrderStatus.PARTIALLY_FILLED
                         }
@@ -54,23 +54,27 @@ class ConfirmedOrderCommandsProcessor : Processor<String, WalletCommand, String,
                             status = status
                         )
                     } else {
-                        existingOrder
+                        //do nothing as other wallet command related to this order will emit changed order event
+                        null
                     }
                 }
             }
 
-            val outRecord = Record(
-                orderId,
-                order,
-                context.currentSystemTimeMs()
-            )
-            context.forward(outRecord)
+            if (order != null || OrderCommandType.CANCEL == orderCommand.command) {
+                val outRecord = Record(
+                    orderId,
+                    order,
+                    context.currentSystemTimeMs()
+                )
+                context.forward(outRecord)
+            }
 
-            if (order != null) {
-                orderStore.put(order.id, order)
-
-            } else {
+            if (OrderCommandType.CANCEL == orderCommand.command) {
                 orderStore.delete(orderId)
+            } else {
+                if (order != null) {
+                    orderStore.put(order.id, order)
+                }
             }
 
             //don't need order command anymore - we actually need, as orderCommand used by multiple wallet commands
