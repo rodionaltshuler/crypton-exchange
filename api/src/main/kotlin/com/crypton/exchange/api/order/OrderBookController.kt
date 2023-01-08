@@ -26,20 +26,20 @@ class OrderBookController(private val ksql: Client, private val mapper: ObjectMa
         val query = "SELECT * FROM QUERYABLE_ORDERS;"
         val rows = ksql.executeQuery(query).get()
 
-        val orders = rows.map {
+        val orderKsqls = rows.map {
             val columns = it.columnNames()
             val values = it.values()
             val map = HashMap<String, Any>()
             columns.indices.forEach { i ->
                 map[columns[i]] = values.getValue(i)
             }
-            mapper.convertValue(map, Order::class.java)
+            mapper.convertValue(map, OrderKsql::class.java)
         }
 
-        return OrderBookDto(orders)
+        return OrderBookDto(orderKsqls)
     }
 
 
 }
 
-data class OrderBookDto(val orders: List<Order>)
+data class OrderBookDto(val orderKsqls: List<OrderKsql>)

@@ -2,7 +2,7 @@ package com.crypton.exchange.api.order
 
 import com.fasterxml.jackson.annotation.JsonAlias
 
-data class Order(
+data class OrderKsql(
     @JsonAlias("ID") val id: String,
     @JsonAlias("BASEASSETID") val baseAssetId: String,
     @JsonAlias("QUOTEASSETID") val quoteAssetId: String,
