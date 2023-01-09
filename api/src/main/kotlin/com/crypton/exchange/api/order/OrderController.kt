@@ -12,6 +12,7 @@ import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.server.ResponseStatusException
 import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import java.util.*
 import java.util.concurrent.Executors
 
@@ -91,12 +92,30 @@ class OrderController(
     }
 
     @GetMapping("/order/{order_id}")
-    fun orderStatus(@PathVariable("order_id") orderId: String) : OrderKsql {
+    fun orderUpdates(@PathVariable("order_id") orderId: String): Flux<ServerSentEvent<HasOrderId>> {
 
+        val handle = orderStatusPublisher.subscribe(orderId)
+
+        val existingOrder: Flux<HasOrderId> = Flux.from(orderStatus(orderId));
+        val updates = orderStatusPublisher.listen(orderId)
+
+        //return Flux.concat(existingOrder, updates)
+        return existingOrder.concatWith(updates)
+            .map {
+                ServerSentEvent.builder<HasOrderId>()
+                    .id("order/${orderId}/${System.currentTimeMillis()}")
+                    .data(it)
+                    .build()
+            } .doAfterTerminate {
+                orderStatusPublisher.unsubscribe(handle)
+            }
+    }
+
+    private fun orderStatus(orderId: String): Mono<OrderKsql> {
         val query = "SELECT * FROM QUERYABLE_ORDERS WHERE ID = '${orderId}';"
         val rows = ksql.executeQuery(query).get()
 
-        val orderKsqls = rows.map {
+        val ordersKsql = rows.map {
             val columns = it.columnNames()
             val values = it.values()
             val map = HashMap<String, Any>()
@@ -106,12 +125,9 @@ class OrderController(
             mapper.convertValue(map, OrderKsql::class.java)
         }
 
-        if (orderKsqls.isEmpty()) {
-            throw ResponseStatusException(HttpStatus.NOT_FOUND, "Order $orderId not found")
-        } else {
-            return orderKsqls.first()!!
+        return when (ordersKsql.isEmpty()) {
+            true -> Mono.empty()
+            false -> Mono.just(ordersKsql.first())
         }
-
-
     }
 }

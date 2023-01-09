@@ -1,6 +1,7 @@
 package com.crypton.exchange.api.order
 
 import com.fasterxml.jackson.annotation.JsonAlias
+import org.example.domain.HasOrderId
 
 data class OrderKsql(
     @JsonAlias("ID") val id: String,
@@ -12,4 +13,7 @@ data class OrderKsql(
     @JsonAlias("QTY") val qty: Double,
     @JsonAlias("QTYFILLED") val qtyFilled: Double,
     @JsonAlias("STATUS") val status: String
-)
+) : HasOrderId {
+    override fun orderId() = id
+
+}

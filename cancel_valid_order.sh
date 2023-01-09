@@ -1,1 +1,1 @@
-curl --location --request POST 'localhost:8080/order/cancel/f45112eb-182d-408f-893f-d75442b71b76'
+curl --location --request POST 'localhost:8080/order/cancel/367dd99c-cf74-435c-ab68-bd188dceb375'
