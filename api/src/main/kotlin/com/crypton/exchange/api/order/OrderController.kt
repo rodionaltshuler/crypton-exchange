@@ -1,26 +1,26 @@
 package com.crypton.exchange.api.order
 
-import org.example.domain.OrderCommand
+import com.fasterxml.jackson.databind.ObjectMapper
+import io.confluent.ksql.api.client.Client
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.example.domain.HasOrderId
+import org.example.domain.OrderCommand
 import org.example.domain.OrderCommandType
+import org.springframework.http.HttpStatus
 import org.springframework.http.codec.ServerSentEvent
 import org.springframework.kafka.core.KafkaTemplate
-import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
+import org.springframework.web.server.ResponseStatusException
 import reactor.core.publisher.Flux
 import java.util.*
 import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
-import javax.ws.rs.PathParam
 
 @RestController()
 class OrderController(
     private val orderStatusPublisher: OrderStatusPublisher,
-    private val kafkaTemplate: KafkaTemplate<String, OrderCommand>
+    private val kafkaTemplate: KafkaTemplate<String, OrderCommand>,
+    private val ksql: Client,
+    private val mapper: ObjectMapper
 ) {
 
     private val executor = Executors.newScheduledThreadPool(4)
@@ -90,8 +90,28 @@ class OrderController(
             }
     }
 
-    fun orderStatus(orderId: String) {
-        //flux = subscribe to Publisher listening to the topic [order-commands, order-commands-rejected, orders-confirmed]
-        //return flux
+    @GetMapping("/order/{order_id}")
+    fun orderStatus(@PathVariable("order_id") orderId: String) : OrderKsql {
+
+        val query = "SELECT * FROM QUERYABLE_ORDERS WHERE ID = '${orderId}';"
+        val rows = ksql.executeQuery(query).get()
+
+        val orderKsqls = rows.map {
+            val columns = it.columnNames()
+            val values = it.values()
+            val map = HashMap<String, Any>()
+            columns.indices.forEach { i ->
+                map[columns[i]] = values.getValue(i)
+            }
+            mapper.convertValue(map, OrderKsql::class.java)
+        }
+
+        if (orderKsqls.isEmpty()) {
+            throw ResponseStatusException(HttpStatus.NOT_FOUND, "Order $orderId not found")
+        } else {
+            return orderKsqls.first()!!
+        }
+
+
     }
 }
