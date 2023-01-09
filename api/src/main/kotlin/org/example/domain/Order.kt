@@ -1,5 +1,8 @@
 package org.example.domain
 
+interface HasOrderId {
+    fun orderId(): String
+}
 enum class OrderType {
     LIMIT_SELL, LIMIT_BUY
 }
@@ -8,7 +11,7 @@ enum class OrderType {
 //When Order rejected, filled or cancelled, it should be just removed from order store
 //REJECTED status should be applied to OrderCommand instead
 enum class OrderStatus {
-    NEW, CONFIRMED, PARTIALLY_FILLED, FILLED
+    NEW, CONFIRMED, PARTIALLY_FILLED, FILLED, CANCELLED
 }
 
 data class Order(
@@ -21,7 +24,7 @@ data class Order(
     val qty: Double = 0.0, //quote asset qty
     val qtyFilled: Double = 0.0,
     val status: OrderStatus = OrderStatus.NEW
-) {
+): HasOrderId {
 
     // BTC-USD market, BTC is quote asset, USD is base
     // BUY order, qty = 2.0, price = 15 000: I want to buy 2 BTC
@@ -67,6 +70,8 @@ data class Order(
         OrderType.LIMIT_BUY -> fillQty //buying quote asset, so it will be credited, and qty is of quoteAsset
         OrderType.LIMIT_SELL -> fillPrice * fillQty
     }
+
+    override fun orderId() = id
 
 
 }

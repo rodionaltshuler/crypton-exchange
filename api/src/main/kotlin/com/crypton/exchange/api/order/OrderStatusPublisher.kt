@@ -12,6 +12,8 @@ import org.apache.kafka.streams.errors.LogAndContinueExceptionHandler
 import org.apache.kafka.streams.processor.api.Processor
 import org.apache.kafka.streams.processor.api.ProcessorSupplier
 import org.apache.kafka.streams.processor.api.Record
+import org.example.domain.HasOrderId
+import org.example.domain.Order
 import org.springframework.kafka.support.serializer.JsonSerde
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Flux
@@ -23,14 +25,14 @@ import java.util.function.Consumer
 @Component
 class OrderStatusPublisher {
 
-    private val orderCommandsSink = Sinks.many().multicast().directBestEffort<OrderCommand>()
+    private val hasOrderIds = Sinks.many().multicast().directBestEffort<HasOrderId>()
 
     //private val orderCommandsSink = Sinks.many().replay().latest<OrderCommand>()
 
-    fun publishOrderCommand(command: OrderCommand) = orderCommandsSink.tryEmitNext(command)
+    fun publishOrderCommand(command: HasOrderId) = hasOrderIds.tryEmitNext(command)
 
-    fun listen(orderId: String) = Flux.from(orderCommandsSink.asFlux())
-            .filter { it.orderId == orderId }
+    fun listen(orderId: String) = Flux.from(hasOrderIds.asFlux())
+            .filter { it.orderId() == orderId }
 
     private lateinit var  orderExecutionStreams : KafkaStreams
 
@@ -57,6 +59,13 @@ class OrderStatusPublisher {
         val consumer = Consumer<OrderCommand>{ publishOrderCommand(it) }
 
         topology.addProcessor("OrderCommandsProcessor", ProcessorSupplier { OrderCommandProcessor(consumer) }, "OrderCommandsSource" )
+
+        topology.addSource("OrderSource",
+            Serdes.String().deserializer(),
+            JsonSerde(Order::class.java).deserializer(),
+            "orders-confirmed")
+
+        topology.addProcessor("OrderProcessor", ProcessorSupplier { OrderProcessor{ publishOrderCommand(it)} }, "OrderSource" )
 
         println("TOPOLOGY: \n ${topology.describe()}")
 
@@ -88,14 +97,28 @@ data class Handle(val handle: String, val orderId: String)
 
 private val subscribers = CopyOnWriteArraySet<Handle>()
 
+private class OrderProcessor(private val consumer: (Order) -> Unit): Processor<String, Order, String, Order> {
+    override fun process(record: Record<String, Order>?) {
+        if (record?.value() != null) {
+            val orderId = record.value().orderId()
+            println("Got order command: ${record.value()}")
+            if (subscribers.map { it.orderId }.contains(orderId)) {
+                consumer(record.value())
+            }
+        }
+    }
+
+}
 private class OrderCommandProcessor(private val consumer: Consumer<OrderCommand>) : Processor<String, OrderCommand, String, OrderCommand> {
 
     override fun process(record: Record<String, OrderCommand>?) {
-        val orderId = record!!.value().orderId
+        if (record?.value() != null) {
+        val orderId = record.value().orderId
         println("Got order command: ${record.value()}")
         if (subscribers.map { it.orderId }.contains(orderId)) {
             consumer.accept(record.value())
         }
+            }
     }
 
 }

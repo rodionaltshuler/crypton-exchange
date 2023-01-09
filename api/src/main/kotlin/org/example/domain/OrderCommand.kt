@@ -9,7 +9,9 @@ data class OrderCommand(
     val fillPrice: Double = 1.0,
     val message: String = "",
     val order: Order?
-)
+) : HasOrderId {
+    override fun orderId(): String = orderId
+}
 
 enum class OrderCommandType {
     SUBMIT, CANCEL, FILL
