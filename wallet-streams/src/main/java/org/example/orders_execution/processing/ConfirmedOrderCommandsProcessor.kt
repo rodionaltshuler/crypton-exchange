@@ -38,7 +38,8 @@ class ConfirmedOrderCommandsProcessor : Processor<String, WalletCommand, String,
                 }
 
                 OrderCommandType.CANCEL -> {
-                    null
+                    val existingOrder: Order = orderStore.get(orderId)
+                    existingOrder.copy(status = OrderStatus.CANCELLED)
                 }
 
                 OrderCommandType.FILL -> {
@@ -60,7 +61,7 @@ class ConfirmedOrderCommandsProcessor : Processor<String, WalletCommand, String,
                 }
             }
 
-            if (order != null || OrderCommandType.CANCEL == orderCommand.command) {
+            if (order != null) {
                 val outRecord = Record(
                     orderId,
                     order,
