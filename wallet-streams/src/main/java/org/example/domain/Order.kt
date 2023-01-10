@@ -1,7 +1,8 @@
 package org.example.domain
 
-enum class OrderType {
-    LIMIT_SELL, LIMIT_BUY
+enum class OrderType(val counterOperations: Set<String>) {
+    LIMIT_SELL(setOf("LIMIT_BUY")),
+    LIMIT_BUY(setOf("LIMIT_SELL"))
 }
 
 //TODO Order can be NEW or CONFIRMED, as orders with other statuses are not supposed to be written in stateStore/streams
