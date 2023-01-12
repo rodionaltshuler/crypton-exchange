@@ -1,7 +1,7 @@
 package com.crypton.exchange.api.order
 
 import com.fasterxml.jackson.annotation.JsonAlias
-import org.example.domain.HasOrderId
+import com.crypton.exchange.domain.HasOrderId
 
 data class OrderKsql(
     @JsonAlias("ID") val id: String,

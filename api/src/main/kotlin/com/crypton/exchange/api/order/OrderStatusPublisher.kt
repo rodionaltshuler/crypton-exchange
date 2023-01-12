@@ -1,6 +1,6 @@
 package com.crypton.exchange.api.order
 
-import org.example.domain.OrderCommand
+import com.crypton.exchange.domain.OrderCommand
 import jakarta.annotation.PostConstruct
 import jakarta.annotation.PreDestroy
 import org.apache.kafka.common.serialization.Serdes
@@ -12,8 +12,8 @@ import org.apache.kafka.streams.errors.LogAndContinueExceptionHandler
 import org.apache.kafka.streams.processor.api.Processor
 import org.apache.kafka.streams.processor.api.ProcessorSupplier
 import org.apache.kafka.streams.processor.api.Record
-import org.example.domain.HasOrderId
-import org.example.domain.Order
+import com.crypton.exchange.domain.HasOrderId
+import com.crypton.exchange.domain.Order
 import org.springframework.kafka.support.serializer.JsonSerde
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Flux

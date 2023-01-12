@@ -3,7 +3,7 @@ package com.crypton.exchange.api
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.confluent.ksql.api.client.Client
 import io.confluent.ksql.api.client.ClientOptions
-import org.example.domain.OrderCommand
+import com.crypton.exchange.domain.OrderCommand
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization.StringSerializer
 import org.springframework.beans.factory.annotation.Value

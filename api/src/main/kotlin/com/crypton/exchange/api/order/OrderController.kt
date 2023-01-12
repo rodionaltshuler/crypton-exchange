@@ -3,9 +3,9 @@ package com.crypton.exchange.api.order
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.confluent.ksql.api.client.Client
 import org.apache.kafka.clients.producer.ProducerRecord
-import org.example.domain.HasOrderId
-import org.example.domain.OrderCommand
-import org.example.domain.OrderCommandType
+import com.crypton.exchange.domain.HasOrderId
+import com.crypton.exchange.domain.OrderCommand
+import com.crypton.exchange.domain.OrderCommandType
 import org.springframework.http.HttpStatus
 import org.springframework.http.codec.ServerSentEvent
 import org.springframework.kafka.core.KafkaTemplate
