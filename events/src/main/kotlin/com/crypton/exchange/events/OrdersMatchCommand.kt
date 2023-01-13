@@ -6,4 +6,6 @@ data class OrdersMatchCommand(
     val rightOrder: Order,
     val qtyFilled: Double, //base asset
     val price: Double
-)
+) {
+    fun market() = leftOrder.baseAssetId + "-" + leftOrder.quoteAssetId
+}

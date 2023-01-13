@@ -1,0 +1,11 @@
+{
+  "id": "event_01",
+  "walletCommand": {
+    "id": "command_4",
+    "causeId": "deposit_1",
+    "walletId": "wallet_2",
+    "assetId": "BTC",
+    "operation": "CREDIT",
+    "amount": 10.0
+  }
+}

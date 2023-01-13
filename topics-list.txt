@@ -1,3 +1,5 @@
+order-processing-input
+order-processing-output
 order-commands
 wallet-commands
 orders-confirmed

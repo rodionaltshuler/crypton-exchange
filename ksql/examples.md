@@ -1,3 +1,14 @@
+### Run ksqldb-cli
+```
+docker exec -it ksqldb-cli /bin/ksql http://ksqldb-server:8088
+```
+
+#### Print output topic
+```
+PRINT "order-processing-output" FROM BEGINNING;
+```
+
+
 ### Create new ksql migrations project
 ```
 docker exec ksqldb-server ksql-migrations new-project /share/ksql-migrations http://localhost:8088

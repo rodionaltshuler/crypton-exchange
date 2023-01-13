@@ -24,6 +24,8 @@ class MatchingEngineProcessor : Processor<String, Order, String, OrdersMatchComm
             .toList())
         val orderMatchCommands =  orderBook.process(order)
 
+        //fixme set order status to PROCESSED, so at the end of topology we will not send it here as just confirmed
+
         val key = "${order.baseAssetId}-${order.quoteAssetId}"
         orderMatchCommands.forEach {
             val record = Record(key, it, context.currentSystemTimeMs())

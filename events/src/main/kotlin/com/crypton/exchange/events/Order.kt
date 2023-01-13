@@ -6,7 +6,10 @@ enum class OrderType(val counterOperations: Set<String>) {
 }
 
 enum class OrderStatus {
-    NEW, CONFIRMED, PARTIALLY_FILLED, FILLED, CANCELLED
+    NEW, CONFIRMED, PROCESSED,
+    @Deprecated("Status PARTIALLY_FILLED is to be removed")
+    PARTIALLY_FILLED,
+    FILLED, CANCELLED, REJECTED
 }
 
 data class Order(
@@ -18,5 +21,6 @@ data class Order(
     val price: Double = 1.0, //price == quote asset price / base asset price
     val qty: Double = 0.0, //quote asset qty
     val qtyFilled: Double = 0.0,
-    val status: OrderStatus = OrderStatus.NEW
+    val status: OrderStatus = OrderStatus.NEW,
+    val message: String = ""
 )
