@@ -4,6 +4,7 @@ import com.crypton.exchange.events.*
 import org.apache.kafka.streams.processor.api.Processor
 import org.apache.kafka.streams.processor.api.ProcessorContext
 import org.apache.kafka.streams.processor.api.Record
+import java.util.*
 
 class OrdersMatchExecutionProcessor : Processor<String, Event, String, Event> {
 
@@ -19,7 +20,7 @@ class OrdersMatchExecutionProcessor : Processor<String, Event, String, Event> {
 
         if (event.ordersMatchCommand == null) {
             //this processor processes only order match commands
-            context.forward(record)
+            context.forward(record.withKey(event.orderPartitioningKey()))
         } else {
 
             val matchCommand = event.ordersMatchCommand!!
@@ -27,7 +28,7 @@ class OrdersMatchExecutionProcessor : Processor<String, Event, String, Event> {
             val matchId = matchCommand.matchId
 
             val leftCommand = OrderCommand(
-                id = matchId + "-" + matchCommand.leftOrder.id,
+                id = UUID.randomUUID().toString(),
                 orderId = matchCommand.leftOrder.id,
                 causeId = matchId,
                 command = OrderCommandType.FILL,
@@ -36,7 +37,7 @@ class OrdersMatchExecutionProcessor : Processor<String, Event, String, Event> {
             )
 
             val rightCommand = OrderCommand(
-                id = matchId + "-" + matchCommand.rightOrder.id,
+                id = UUID.randomUUID().toString(),
                 orderId = matchCommand.rightOrder.id,
                 causeId = matchId,
                 command = OrderCommandType.FILL,
@@ -45,17 +46,19 @@ class OrdersMatchExecutionProcessor : Processor<String, Event, String, Event> {
             )
 
             val recordLeft = Record(
-                matchCommand.leftOrder.walletId,
+                event.orderPartitioningKey(),
                 event.copy(
                     ordersMatchCommand = null,
+                    order = rightCommand.order,
                     orderCommand = leftCommand),
                 context.currentSystemTimeMs()
             )
 
             val recordRight = Record(
-                matchCommand.rightOrder.walletId,
+                event.orderPartitioningKey(),
                 event.copy(
                     ordersMatchCommand = null,
+                    order = rightCommand.order,
                     orderCommand = rightCommand),
                 context.currentSystemTimeMs()
             )

@@ -44,3 +44,5 @@ fun Order.amountToCredit(fillPrice: Double, fillQty: Double) = when (orderType) 
     OrderType.LIMIT_BUY -> fillQty //buying quote asset, so it will be credited, and qty is of quoteAsset
     OrderType.LIMIT_SELL -> fillPrice * fillQty
 }
+
+fun Order.market() = "$baseAssetId-$quoteAssetId"

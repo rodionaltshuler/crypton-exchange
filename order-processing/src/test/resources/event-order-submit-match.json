@@ -1,0 +1,21 @@
+{
+  "id": "event_02",
+  "orderCommand": {
+    "id": "order_command_1",
+    "orderId": "order_1",
+    "command": "SUBMIT",
+    "causeId": "order_1",
+    "message": "",
+    "order": {
+      "id": "order_1",
+      "baseAssetId":"BTC",
+      "quoteAssetId": "ETH",
+      "walletId": "wallet_1",
+      "orderType": "LIMIT_SELL",
+      "price": 0.05,
+      "qty": 2.5,
+      "qtyFilled": 0.0,
+      "status": "NEW"
+    }
+  }
+}

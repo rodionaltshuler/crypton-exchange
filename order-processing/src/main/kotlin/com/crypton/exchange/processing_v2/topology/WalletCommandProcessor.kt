@@ -35,7 +35,7 @@ class WalletCommandProcessor : Processor<String, Event, String, Event> {
 
         if (event.walletCommand == null) {
             //only processing wallet commands - skipping if none
-            context.forward(record)
+            context.forward(record.withKey(event.orderPartitioningKey()))
         } else {
             val command = event.walletCommand!!
 
@@ -82,11 +82,11 @@ class WalletCommandProcessor : Processor<String, Event, String, Event> {
             )
 
             println("WalletCommand processor output: ${outputRecord.value()}")
-            if (command.operation.shouldModifyOrderOnFill) {
-                context.forward(outputRecord)
-            } else {
-                context.forward(outputRecord, "OrdersConfirmedSink")
+
+            if (event.requiresFurtherOrderProcessing()) {
+                context.forward(outputRecord.withKey(event.orderPartitioningKey()), "WalletCommandsOutputSink")
             }
+            context.forward(outputRecord, "OrdersConfirmedSink")
         }
 
     }

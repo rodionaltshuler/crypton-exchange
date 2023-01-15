@@ -123,29 +123,32 @@ fun singleTopology(): Topology {
     //else skip
     topology.addProcessor("OrdersMatchExecutionProcessor", ProcessorSupplier { OrdersMatchExecutionProcessor() }, "MatchingEngineProcessor")
 
-    topology.addProcessor("OrderCommandsToWalletCommandsProcessor2", ProcessorSupplier { OrderCommandsToWalletCommandsProcessor() }, "OrdersMatchExecutionProcessor" )
+    topology.addSink("OrderProcessingOutput",
+        "order-processing-input",
+        Serdes.String().serializer(),
+        JsonSerde(Event::class.java).serializer(),
+        "OrdersMatchExecutionProcessor"
+    )
+
+
+
 
     topology.addSink("WalletCommandsInputSink",
         "wallet-commands-input",
         Serdes.String().serializer(),
         JsonSerde(Event::class.java).serializer(),
-        "OrderCommandsToWalletCommandsProcessor", "OrderCommandsToWalletCommandsProcessor2"
+        "OrderCommandsToWalletCommandsProcessor"
         )
-
-    //if order status CONFIRMED -> forward it to MatchingEngineProcessor? Add NOT_MATCHED status?
-    //need to distinguish between just confirmed order and order already passed matching engine
-    topology.addProcessor("ConfirmedOrderCommandsProcessor2", ProcessorSupplier { ConfirmedOrderCommandsProcessor() },     "WalletCommandsOutputSource")
-
 
 
     topology.addStateStore(walletCommandProcessorStoreBuilder, "WalletCommandsProcessor")
-    topology.addStateStore(orderStoreBuilder,"MatchingEngineProcessor", "OrderCommandsProcessor", "ConfirmedOrderCommandsProcessor", "ConfirmedOrderCommandsProcessor2")
+    topology.addStateStore(orderStoreBuilder,"MatchingEngineProcessor", "OrderCommandsProcessor", "ConfirmedOrderCommandsProcessor")
 
     topology.addSink("OrdersConfirmedSink",
         "order-processing-output",
         Serdes.String().serializer(),
         JsonSerde(Event::class.java).serializer(),
-        "ConfirmedOrderCommandsProcessor", "ConfirmedOrderCommandsProcessor2", "WalletCommandsProcessor"
+        "ConfirmedOrderCommandsProcessor", "WalletCommandsProcessor", "MatchingEngineProcessor"
     )
 
     return topology

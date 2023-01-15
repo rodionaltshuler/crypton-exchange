@@ -59,7 +59,7 @@ class ConfirmedOrderCommandsProcessor : Processor<String, Event, String, Event> 
 
 
             val outRecord = Record(
-                record.key(),
+                event.orderPartitioningKey(),
                 event.copy(
                     order = order,
                     orderCommand = null,
@@ -68,20 +68,21 @@ class ConfirmedOrderCommandsProcessor : Processor<String, Event, String, Event> 
                 context.currentSystemTimeMs()
             )
 
-            if (order.status == OrderStatus.CONFIRMED) {
-                //pass to MatchOrderProcessor
-                context.forward(outRecord, "MatchingEngineProcessor")
-            }
-
-            context.forward(outRecord)
+            context.forward(outRecord, "OrdersConfirmedSink")
 
             if (OrderCommandType.CANCEL == orderCommand.command) {
                 orderStore.delete(orderId)
             } else {
-                if (order != null) {
-                    orderStore.put(order.id, order)
+                orderStore.put(order.id, order)
+                if (order.status == OrderStatus.CONFIRMED) {
+                    //pass to MatchOrderProcessor
+                    context.forward(outRecord, "MatchingEngineProcessor")
                 }
             }
+
+
+
+
         }
     }
 }

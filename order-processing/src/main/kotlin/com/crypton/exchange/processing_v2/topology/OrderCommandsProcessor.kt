@@ -9,6 +9,7 @@ import org.apache.kafka.streams.state.ReadOnlyKeyValueStore
 import org.apache.kafka.streams.state.StoreBuilder
 import org.apache.kafka.streams.state.Stores
 import org.springframework.kafka.support.serializer.JsonSerde
+import java.util.*
 
 
 val orderStoreBuilder: StoreBuilder<*> = Stores.keyValueStoreBuilder(
@@ -30,13 +31,16 @@ class OrderCommandsProcessor : Processor<String, Event, String, Event> {
     }
 
     private fun processSubmit(command: OrderCommand, originalEvent: Event): Event? {
-        val existingOrder = orderStore.get(command.orderId)
-        return if (existingOrder == null) {
-            originalEvent
-        } else {
-            println("Order ${command.orderId} already exists")
-            return null
-        }
+        val generatedOrderId = UUID.randomUUID().toString()
+        val order = command.order!!.copy(id = generatedOrderId)
+
+        return originalEvent.copy(
+            orderCommand = command.copy(
+                orderId = generatedOrderId,
+                order = order
+            ),
+            order = order
+        )
     }
 
     private fun processCancel(command: OrderCommand, originalEvent: Event): Event? {
@@ -51,7 +55,10 @@ class OrderCommandsProcessor : Processor<String, Event, String, Event> {
 
     private fun processFill(command: OrderCommand, originalEvent: Event): Event? {
 
-        val existingOrder = orderStore.get(command.orderId)
+        val existingOrder = originalEvent.order
+
+        println("Filling order: $existingOrder")
+        println("Order command: $command")
 
         return if (existingOrder != null && OrderStatus.PROCESSED == existingOrder.status) {
 
@@ -73,7 +80,7 @@ class OrderCommandsProcessor : Processor<String, Event, String, Event> {
         val event : Event = record!!.value()
         if (event.orderCommand == null) {
             //this processor takes care only about order commands
-            context.forward(record)
+            context.forward(record.withKey(event.walletPartitioningKey()))
         } else {
             val command = event.orderCommand!!
             val outputEvent = when (command.command) {
@@ -82,10 +89,12 @@ class OrderCommandsProcessor : Processor<String, Event, String, Event> {
                 OrderCommandType.FILL -> processFill(command, event)
             }
 
+            println("Output event in OrderCommandsProcessor: $outputEvent")
+
             if (outputEvent != null) {
                 context.forward(
                     Record(
-                        record.key(),
+                        outputEvent.orderPartitioningKey(),
                         outputEvent,
                         context.currentSystemTimeMs()
                     )

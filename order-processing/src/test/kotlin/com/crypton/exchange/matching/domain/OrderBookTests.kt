@@ -184,7 +184,7 @@ class OrderBookTests {
         price = 0.1,
         qty = 10.0,
         qtyFilled = 0.0,
-        status = OrderStatus.CONFIRMED
+        status = OrderStatus.PROCESSED
     )
 
 }

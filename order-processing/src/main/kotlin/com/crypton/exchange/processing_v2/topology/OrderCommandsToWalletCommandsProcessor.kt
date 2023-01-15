@@ -19,13 +19,7 @@ class OrderCommandsToWalletCommandsProcessor : Processor<String, Event, String, 
         val event = record!!.value()
         if (event.orderCommand == null) {
             //if there are no order command - skip
-            if (event.walletCommand != null) {
-                val key = event.walletCommand!!.walletId
-                context.forward(record.withKey(key))
-            } else {
-                context.forward(record)
-            }
-
+            context.forward(record.withKey(event.walletPartitioningKey()))
         } else {
             val command = event.orderCommand!!
 
@@ -88,7 +82,7 @@ class OrderCommandsToWalletCommandsProcessor : Processor<String, Event, String, 
 
             walletCommands
                 .map { event.copy(walletCommand = it) }
-                .map { Record(it.walletCommand!!.walletId, it, context.currentSystemTimeMs()) }
+                .map { Record(it.walletPartitioningKey(), it, context.currentSystemTimeMs()) }
                 .forEach { context.forward(it) }
 
         }

@@ -7,6 +7,7 @@ import org.apache.kafka.streams.processor.api.Record
 import org.apache.kafka.streams.state.KeyValueStore
 import com.crypton.exchange.events.Order
 import com.crypton.exchange.events.OrderStatus
+import com.crypton.exchange.events.orderPartitioningKey
 import com.crypton.exchange.processing.OrderBook
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore
 
@@ -14,7 +15,7 @@ class MatchingEngineProcessor : Processor<String, Event, String, Event> {
 
     private lateinit var context: ProcessorContext<String, Event>
 
-    private lateinit var orderStore: ReadOnlyKeyValueStore<String, Order>
+    private lateinit var orderStore: KeyValueStore<String, Order>
 
     override fun init(context: ProcessorContext<String, Event>?) {
         super.init(context)
@@ -27,13 +28,15 @@ class MatchingEngineProcessor : Processor<String, Event, String, Event> {
 
         val event = record!!.value()
 
+        println("MatchingEnginer processor: processing: \n $event")
+
         if (event.order == null || event.order!!.status != OrderStatus.CONFIRMED) {
             //this processor processes only confirmed orders
             context.forward(record)
 
         } else {
 
-            val order = event.order!!
+            val order = event.order!!.copy(status = OrderStatus.PROCESSED)
             val orders = orderStore.all().asSequence()
 
             val orderBook = OrderBook(orders
@@ -42,23 +45,32 @@ class MatchingEngineProcessor : Processor<String, Event, String, Event> {
 
             val orderMatchCommands = orderBook.process(order)
 
+            println("OrderMatchCommands: $orderMatchCommands")
+
             val outputEvents = orderMatchCommands
                 .map { command ->
                     event.copy(
                         ordersMatchCommand = command,
-                        order = event.order!!.copy(status = OrderStatus.PROCESSED)
+                        order = null,
+                        orderCommand = null
                     )
                 }
 
 
             val records = outputEvents.
                     map {
-                        val key = it.ordersMatchCommand!!.market()
+                        val key = it.orderPartitioningKey()
                         val value = it
                         Record(key, value, context.currentSystemTimeMs())
                     }
 
+            orderStore.put(order.id, order)
+            context.forward(record.withValue(event.copy(order = order)), "OrdersConfirmedSink")
+
             records.forEach{ context.forward(it) }
+
+
+
         }
 
 

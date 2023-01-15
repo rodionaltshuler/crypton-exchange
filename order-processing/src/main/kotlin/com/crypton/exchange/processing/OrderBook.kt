@@ -10,11 +10,15 @@ import kotlin.collections.ArrayList
 class OrderBook(private val orders: Collection<Order>) {
 
     fun process(order: Order): Collection<OrdersMatchCommand> {
-        val orderStatusesToMatch = setOf(OrderStatus.CONFIRMED, OrderStatus.PARTIALLY_FILLED)
+        println("Looking for the matches for order ${order.id}")
+        val orderStatusesToMatch = setOf(OrderStatus.PROCESSED)
         val possibleMatches = orders.asSequence()
+            .onEach {
+                println(it)
+            }
             // filter statuses
             .filter {
-                orderStatusesToMatch.contains(order.status)
+                orderStatusesToMatch.contains(it.status)
             }
             // filter market
             .filter {
@@ -47,6 +51,8 @@ class OrderBook(private val orders: Collection<Order>) {
                 }
             }
             .toList()
+
+        println("Found ${possibleMatches.size} possible matches")
 
         var commands = ArrayList<OrdersMatchCommand>()
 
@@ -83,9 +89,9 @@ class OrderBook(private val orders: Collection<Order>) {
                 )
                 matchedQty += qty
             }
-
-            return commands
         }
+        println("Found matches count: ${commands.size}")
+
         return commands
     }
 
