@@ -8,6 +8,7 @@ docker exec -it ksqldb-cli /bin/ksql http://ksqldb-server:8088
 PRINT "order-processing-output" FROM BEGINNING;
 ```
 
+PRINT "orders-processing-application-stream-wallet-store-changelog" FROM BEGINNING; 
 
 ### Create new ksql migrations project
 ```

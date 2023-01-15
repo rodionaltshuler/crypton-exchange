@@ -19,7 +19,13 @@ class OrderCommandsToWalletCommandsProcessor : Processor<String, Event, String, 
         val event = record!!.value()
         if (event.orderCommand == null) {
             //if there are no order command - skip
-            context.forward(record)
+            if (event.walletCommand != null) {
+                val key = event.walletCommand!!.walletId
+                context.forward(record.withKey(key))
+            } else {
+                context.forward(record)
+            }
+
         } else {
             val command = event.orderCommand!!
 

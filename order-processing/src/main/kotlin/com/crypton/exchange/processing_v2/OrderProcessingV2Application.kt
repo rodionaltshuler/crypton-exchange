@@ -83,14 +83,35 @@ fun singleTopology(): Topology {
     //else skip
     topology.addProcessor("OrderCommandsToWalletCommandsProcessor", ProcessorSupplier { OrderCommandsToWalletCommandsProcessor() }, "OrderCommandsProcessor" )
 
+    topology.addSource("WalletCommandsInputSource",
+        Serdes.String().deserializer(),
+        JsonSerde(Event::class.java).deserializer(),
+        "wallet-commands-input"
+    )
+
+    topology.addSource("WalletCommandsOutputSource",
+        Serdes.String().deserializer(),
+        JsonSerde(Event::class.java).deserializer(),
+        "wallet-commands-output"
+    )
+
+
     //if wallet command exists - process it
     //if wallet command can't be done, set order status Rejected
     //else skip
-    topology.addProcessor("WalletCommandsProcessor", ProcessorSupplier { WalletCommandProcessor() }, "OrderCommandsToWalletCommandsProcessor")
+    topology.addProcessor("WalletCommandsProcessor", ProcessorSupplier { WalletCommandProcessor() }, "WalletCommandsInputSource")
+
+    topology.addSink("WalletCommandsOutputSink",
+        "wallet-commands-output",
+        Serdes.String().serializer(),
+        JsonSerde(Event::class.java).serializer(),
+        "WalletCommandsProcessor"
+    )
+
 
     //if order status CONFIRMED -> forward it to MatchingEngineProcessor? Add NOT_MATCHED status?
     //need to distinguish between just confirmed order and order already passed matching engine
-    topology.addProcessor("ConfirmedOrderCommandsProcessor", ProcessorSupplier { ConfirmedOrderCommandsProcessor() },     "WalletCommandsProcessor")
+    topology.addProcessor("ConfirmedOrderCommandsProcessor", ProcessorSupplier { ConfirmedOrderCommandsProcessor() },     "WalletCommandsOutputSource")
 
     //if envelop contains confirmed order
     // -> output orderMatchCommand
@@ -104,25 +125,27 @@ fun singleTopology(): Topology {
 
     topology.addProcessor("OrderCommandsToWalletCommandsProcessor2", ProcessorSupplier { OrderCommandsToWalletCommandsProcessor() }, "OrdersMatchExecutionProcessor" )
 
-    //if wallet command exists - process it
-    //if wallet command can't be done, set order status Rejected
-    //else skip
-    topology.addProcessor("WalletCommandsProcessor2", ProcessorSupplier { WalletCommandProcessor() }, "OrderCommandsToWalletCommandsProcessor2")
+    topology.addSink("WalletCommandsInputSink",
+        "wallet-commands-input",
+        Serdes.String().serializer(),
+        JsonSerde(Event::class.java).serializer(),
+        "OrderCommandsToWalletCommandsProcessor", "OrderCommandsToWalletCommandsProcessor2"
+        )
 
     //if order status CONFIRMED -> forward it to MatchingEngineProcessor? Add NOT_MATCHED status?
     //need to distinguish between just confirmed order and order already passed matching engine
-    topology.addProcessor("ConfirmedOrderCommandsProcessor2", ProcessorSupplier { ConfirmedOrderCommandsProcessor() },     "WalletCommandsProcessor2")
+    topology.addProcessor("ConfirmedOrderCommandsProcessor2", ProcessorSupplier { ConfirmedOrderCommandsProcessor() },     "WalletCommandsOutputSource")
 
 
 
-    topology.addStateStore(walletCommandProcessorStoreBuilder, "WalletCommandsProcessor", "WalletCommandsProcessor2")
+    topology.addStateStore(walletCommandProcessorStoreBuilder, "WalletCommandsProcessor")
     topology.addStateStore(orderStoreBuilder,"MatchingEngineProcessor", "OrderCommandsProcessor", "ConfirmedOrderCommandsProcessor", "ConfirmedOrderCommandsProcessor2")
 
     topology.addSink("OrdersConfirmedSink",
         "order-processing-output",
         Serdes.String().serializer(),
         JsonSerde(Event::class.java).serializer(),
-        "ConfirmedOrderCommandsProcessor", "ConfirmedOrderCommandsProcessor2", "WalletCommandsProcessor", "WalletCommandsProcessor2"
+        "ConfirmedOrderCommandsProcessor", "ConfirmedOrderCommandsProcessor2", "WalletCommandsProcessor"
     )
 
     return topology

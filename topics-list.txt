@@ -1,8 +1,4 @@
 order-processing-input
 order-processing-output
-order-commands
-wallet-commands
-orders-confirmed
-order-match-commands
-wallet-commands-confirmed
-wallet-commands-rejected
+wallet-commands-input
+wallet-commands-output
