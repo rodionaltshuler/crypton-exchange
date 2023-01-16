@@ -1,4 +1,4 @@
-package com.crypton.exchange.processing
+package com.crypton.exchange.domain
 
 import com.crypton.exchange.events.Order
 import com.crypton.exchange.events.OrderStatus

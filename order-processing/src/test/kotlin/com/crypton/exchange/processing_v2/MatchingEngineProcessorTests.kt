@@ -1,8 +1,8 @@
-package com.crypton.exchange.matching.topology
+package com.crypton.exchange.processing_v2
 
+import com.crypton.exchange.events.Event
+import com.crypton.exchange.processing_v2.topology.MatchingEngineProcessor
 import org.apache.kafka.streams.processor.api.MockProcessorContext
-import com.crypton.exchange.events.OrdersMatchCommand
-import com.crypton.exchange.matching.topology.MatchingEngineProcessor
 import org.junit.jupiter.api.Test
 
 class MatchingEngineProcessorTests {
@@ -10,7 +10,7 @@ class MatchingEngineProcessorTests {
     @Test
     fun `forwards nothing`(){
         val processor = MatchingEngineProcessor()
-        val context = MockProcessorContext<String, OrdersMatchCommand>()
+        val context = MockProcessorContext<String, Event>()
         processor.init(context)
 
         val forwarded = context.forwarded()

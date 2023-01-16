@@ -1,5 +1,6 @@
 package com.crypton.exchange.processing_v2.topology
 
+import com.crypton.exchange.domain.OrderBook
 import com.crypton.exchange.events.Event
 import org.apache.kafka.streams.processor.api.Processor
 import org.apache.kafka.streams.processor.api.ProcessorContext
@@ -8,8 +9,6 @@ import org.apache.kafka.streams.state.KeyValueStore
 import com.crypton.exchange.events.Order
 import com.crypton.exchange.events.OrderStatus
 import com.crypton.exchange.events.orderPartitioningKey
-import com.crypton.exchange.processing.OrderBook
-import org.apache.kafka.streams.state.ReadOnlyKeyValueStore
 
 class MatchingEngineProcessor : Processor<String, Event, String, Event> {
 

@@ -1,7 +1,6 @@
-package com.crypton.exchange.matching.domain
+package com.crypton.exchange.domain
 
 import com.crypton.exchange.events.Order
-import com.crypton.exchange.processing.OrderBook
 import com.crypton.exchange.events.OrderStatus
 import com.crypton.exchange.events.OrderType
 import org.junit.jupiter.api.Tag
