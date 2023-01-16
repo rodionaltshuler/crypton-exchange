@@ -32,7 +32,7 @@ class OrderCommandsToWalletCommandsProcessor : Processor<String, Event, String, 
                         order = command.order!!
                         listOf(
                             WalletCommand(
-                                id = command.id + "-" + WalletOperation.RELEASE,
+                                id = command.id + "-" + WalletOperation.BLOCK,
                                 causeId = command.orderId,
                                 walletId = order.walletId,
                                 assetId = order.assetToBlock(),
@@ -57,6 +57,7 @@ class OrderCommandsToWalletCommandsProcessor : Processor<String, Event, String, 
                     OrderCommandType.FILL -> {
                         order = event.order!!
                         //order of commands is important -> order confirmed after RELEASE_AND_DEBIT
+                        println("OrderCommandsToWalletCommandsProcessor: Wallet commands to fill the order: $order")
                         listOf(
                             WalletCommand(
                                 id = command.id + "-" + WalletOperation.CREDIT,

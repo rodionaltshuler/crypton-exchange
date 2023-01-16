@@ -13,9 +13,6 @@ class OrderBook(private val orders: Collection<Order>) {
         println("Looking for the matches for order ${order.id}")
         val orderStatusesToMatch = setOf(OrderStatus.PROCESSED)
         val possibleMatches = orders.asSequence()
-            .onEach {
-                println(it)
-            }
             // filter statuses
             .filter {
                 orderStatusesToMatch.contains(it.status)

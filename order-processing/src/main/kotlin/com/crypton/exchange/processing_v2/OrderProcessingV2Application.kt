@@ -16,6 +16,11 @@ import java.util.*
 import java.util.concurrent.CountDownLatch
 import kotlin.system.exitProcess
 
+const val PROCESSING_INPUT_TOPIC = "order-processing-input"
+const val PROCESSING_OUTPUT_TOPIC = "order-processing-output"
+
+const val WALLET_STORE_NAME = "wallet-store"
+
 
 /**
  * Single topology processing events wrapped in Envelops
@@ -71,7 +76,7 @@ fun singleTopology(): Topology {
     topology.addSource("OrderProcessingInput",
         Serdes.String().deserializer(),
         JsonSerde(Event::class.java).deserializer(),
-        "order-processing-input")
+        PROCESSING_INPUT_TOPIC)
 
 
     //validates OrderCommand SUBMIT, CANCEL, FILL - if it's appropriate for the order's lifecycle
@@ -124,7 +129,7 @@ fun singleTopology(): Topology {
     topology.addProcessor("OrdersMatchExecutionProcessor", ProcessorSupplier { OrdersMatchExecutionProcessor() }, "MatchingEngineProcessor")
 
     topology.addSink("OrderProcessingOutput",
-        "order-processing-input",
+        PROCESSING_INPUT_TOPIC,
         Serdes.String().serializer(),
         JsonSerde(Event::class.java).serializer(),
         "OrdersMatchExecutionProcessor"
@@ -145,7 +150,7 @@ fun singleTopology(): Topology {
     topology.addStateStore(orderStoreBuilder,"MatchingEngineProcessor", "OrderCommandsProcessor", "ConfirmedOrderCommandsProcessor")
 
     topology.addSink("OrdersConfirmedSink",
-        "order-processing-output",
+        PROCESSING_OUTPUT_TOPIC,
         Serdes.String().serializer(),
         JsonSerde(Event::class.java).serializer(),
         "ConfirmedOrderCommandsProcessor", "WalletCommandsProcessor", "MatchingEngineProcessor"

@@ -33,7 +33,8 @@ class OrdersMatchExecutionProcessor : Processor<String, Event, String, Event> {
                 causeId = matchId,
                 command = OrderCommandType.FILL,
                 order = matchCommand.leftOrder,
-                fillQty = matchCommand.qtyFilled
+                fillQty = matchCommand.qtyFilled,
+                fillPrice = matchCommand.price
             )
 
             val rightCommand = OrderCommand(
@@ -42,14 +43,15 @@ class OrdersMatchExecutionProcessor : Processor<String, Event, String, Event> {
                 causeId = matchId,
                 command = OrderCommandType.FILL,
                 order = matchCommand.rightOrder,
-                fillQty = matchCommand.qtyFilled
+                fillQty = matchCommand.qtyFilled,
+                fillPrice = matchCommand.price
             )
 
             val recordLeft = Record(
                 event.orderPartitioningKey(),
                 event.copy(
                     ordersMatchCommand = null,
-                    order = rightCommand.order,
+                    order = leftCommand.order,
                     orderCommand = leftCommand),
                 context.currentSystemTimeMs()
             )

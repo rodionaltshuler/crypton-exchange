@@ -23,7 +23,7 @@ class ConfirmedOrderCommandsProcessor : Processor<String, Event, String, Event> 
         val event = record!!.value()!!
 
         if (event.orderCommand == null) {
-            //skipping - only processing order commands with corresponding wallet command
+            println("ConfirmedOrderCommandsProcessor: skipping $event")
             context.forward(record)
         } else {
 
@@ -68,6 +68,7 @@ class ConfirmedOrderCommandsProcessor : Processor<String, Event, String, Event> 
                 context.currentSystemTimeMs()
             )
 
+            println("ConfirmedOrderCommandsProcessor: forwarding to OrdersConfirmedSink: ${outRecord.value()}")
             context.forward(outRecord, "OrdersConfirmedSink")
 
             if (OrderCommandType.CANCEL == orderCommand.command) {
@@ -76,6 +77,7 @@ class ConfirmedOrderCommandsProcessor : Processor<String, Event, String, Event> 
                 orderStore.put(order.id, order)
                 if (order.status == OrderStatus.CONFIRMED) {
                     //pass to MatchOrderProcessor
+                    println("ConfirmedOrderCommandsProcessor: forwarding to MatchingEngineProcessor: ${outRecord.value()}")
                     context.forward(outRecord, "MatchingEngineProcessor")
                 }
             }

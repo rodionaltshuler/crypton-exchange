@@ -22,7 +22,9 @@ fun StreamsBuilder.orderMatchToOrderCommands() {
             orderId = command.leftOrder.id,
             causeId = matchId,
             command = FILL,
-            order = command.leftOrder
+            order = command.leftOrder,
+            fillPrice = command.price,
+            fillQty = command.qtyFilled
         )
 
         val rightCommand = OrderCommand(
@@ -30,7 +32,9 @@ fun StreamsBuilder.orderMatchToOrderCommands() {
             orderId = command.rightOrder.id,
             causeId = matchId,
             command = FILL,
-            order = command.rightOrder
+            order = command.rightOrder,
+            fillPrice = command.price,
+            fillQty = command.qtyFilled
         )
 
         listOf(

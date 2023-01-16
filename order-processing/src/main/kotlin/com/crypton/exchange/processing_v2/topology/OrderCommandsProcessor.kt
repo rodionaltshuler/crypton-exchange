@@ -58,7 +58,6 @@ class OrderCommandsProcessor : Processor<String, Event, String, Event> {
         val existingOrder = originalEvent.order
 
         println("Filling order: $existingOrder")
-        println("Order command: $command")
 
         return if (existingOrder != null && OrderStatus.PROCESSED == existingOrder.status) {
 

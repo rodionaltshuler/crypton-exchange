@@ -1,6 +1,7 @@
 package com.crypton.exchange.processing_v2.topology
 
 import com.crypton.exchange.events.*
+import com.crypton.exchange.processing_v2.WALLET_STORE_NAME
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.processor.api.Processor
 import org.apache.kafka.streams.processor.api.ProcessorContext
@@ -12,7 +13,7 @@ import org.springframework.kafka.support.serializer.JsonSerde
 
 
 val walletCommandProcessorStoreBuilder: StoreBuilder<*> = Stores.keyValueStoreBuilder(
-    Stores.persistentKeyValueStore("wallet-store"),
+    Stores.persistentKeyValueStore(WALLET_STORE_NAME),
     Serdes.String(),
     JsonSerde(Wallet::class.java)
 )
@@ -25,7 +26,7 @@ class WalletCommandProcessor : Processor<String, Event, String, Event> {
 
     override fun init(context: ProcessorContext<String, Event>?) {
         super.init(context)
-        walletStore = context!!.getStateStore("wallet-store")
+        walletStore = context!!.getStateStore(WALLET_STORE_NAME)
         this.context = context
     }
 
@@ -80,8 +81,6 @@ class WalletCommandProcessor : Processor<String, Event, String, Event> {
                 record.value()!!.copy(walletCommand = null, wallet = wallet),
                 context.currentSystemTimeMs()
             )
-
-            println("WalletCommand processor output: ${outputRecord.value()}")
 
             if (event.requiresFurtherOrderProcessing()) {
                 context.forward(outputRecord.withKey(event.orderPartitioningKey()), "WalletCommandsOutputSink")

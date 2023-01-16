@@ -27,7 +27,8 @@ class OrdersMatchExecutionProcessor : Processor<String, OrdersMatchCommand, Stri
             causeId = matchId,
             command = OrderCommandType.FILL,
             order = matchCommand.leftOrder,
-            fillQty =  matchCommand.qtyFilled
+            fillQty =  matchCommand.qtyFilled,
+            fillPrice = matchCommand.price
         )
 
         val rightCommand = OrderCommand(
@@ -36,7 +37,8 @@ class OrdersMatchExecutionProcessor : Processor<String, OrdersMatchCommand, Stri
             causeId = matchId,
             command = OrderCommandType.FILL,
             order = matchCommand.rightOrder,
-            fillQty =  matchCommand.qtyFilled
+            fillQty =  matchCommand.qtyFilled,
+            fillPrice = matchCommand.price
         )
 
         val recordLeft = Record(matchCommand.leftOrder.walletId,

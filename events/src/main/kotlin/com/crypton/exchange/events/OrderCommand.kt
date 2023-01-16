@@ -5,8 +5,8 @@ data class OrderCommand(
     val orderId: String,
     val causeId: String,
     val command: OrderCommandType,
-    val fillQty: Double = 0.0,
-    val fillPrice: Double = 1.0,
+    val fillQty: Double,
+    val fillPrice: Double,
     val message: String = "",
     val order: Order?
 )

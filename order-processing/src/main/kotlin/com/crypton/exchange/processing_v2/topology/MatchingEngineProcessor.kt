@@ -28,10 +28,11 @@ class MatchingEngineProcessor : Processor<String, Event, String, Event> {
 
         val event = record!!.value()
 
-        println("MatchingEnginer processor: processing: \n $event")
+        println("MatchingEngine processor: processing: \n $event")
 
         if (event.order == null || event.order!!.status != OrderStatus.CONFIRMED) {
             //this processor processes only confirmed orders
+            println("MatchingEngineProcessor: skipping $event")
             context.forward(record)
 
         } else {
