@@ -3,16 +3,17 @@ This cryptocurrency exchange is built entirely on top of Apache Kafka, utilizing
 
 ## Project purpose
 
-#### Achieve ACID  transaction properties with Kafka Streams application
+#### Achieve [ACID  transaction properties with Kafka Streams](https://www.youtube.com/watch?v=v2RJQELoM6Y) application
 Cryptocurrency exchange domain sets high requirements for availability, performance and consistency of the operations:
 on one hand, we can expect high volume of orders, on other hand - each order's processing is an operation where ACID propertis are critical:
 1. <b>Atomicity</b> - either all operations related to order execution is persisted or none at all 
 2. <b>Consistency</b> - when two orders matched, all the related operations - order's removal from order book, credit and debit operations on both wallets involved - should be executed together, or none at all
 3. <b>Isolation</b> - each order execution process should be isolated from other similar ones enough to ensure data it uses relevant till the end of the execution  
 4. <b>Durability</b> - if order processing is successful, the changes to the data persisted even if there are system failures
+[Also check out this on Kafka as DB topic](https://www.kai-waehner.de/blog/2020/03/12/can-apache-kafka-replace-database-acid-storage-transactions-sql-nosql-data-lake/) 
 
 #### Kappa architecture showcase
-Kappa architecture, unlike Lambda, assumes we use single pipeline/tools to process both bounded (batch) and unbounded (real-time) data.
+[Kappa architecture, unlike Lambda](https://www.kai-waehner.de/blog/2021/09/23/real-time-kappa-architecture-mainstream-replacing-batch-lambda/), assumes we use single pipeline/tools to process both bounded (batch) and unbounded (real-time) data.
 This architecture pattern that emphasizes the use of real-time data streams and a unified log as the foundation for all data systems.
 The idea is real-time data can be always converted to static one (for example, we can build a snapshot of user balances from wallet updates stream), 
 but it's not always work the other way (batch -> realtime is hard).
