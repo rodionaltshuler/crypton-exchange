@@ -27,11 +27,15 @@ This hypothesis needs experiments (load testing).
 Monitoring, debugging, testing and modification of stream-based solutions definitely more complex comparing to traditional-database-based solutions. 
 Let's see how the development experience for the complex streaming application looks like. 
 
-
 ## Scope
 1. Orders operations (submit, fill, cancel)
 2. Order matching
 3. Wallet operations (debit, credit, order-specific operations like blocking funds for orders and unblocking on execution/cancellation)
+
+### Streams topology
+
+![Image](topology.png)
+
 4. REST API for order and wallet operations, and also for getting current state of order/wallet, including:
 
     4.1 Pull API (request-response calls)
