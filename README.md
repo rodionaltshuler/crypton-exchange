@@ -18,11 +18,6 @@ This architecture pattern that emphasizes the use of real-time data streams and 
 The idea is real-time data can be always converted to static one (for example, we can build a snapshot of user balances from wallet updates stream), 
 but it's not always work the other way (batch -> realtime is hard).
 
-#### Horizontal scalability evaluation
-By using Kafka as the backbone of the exchange, the system can easily scale horizontally by adding more instances of the application, automatically increasing processing capabilities.
-With an approach when we just use SQL database to get ACID properties for orders processing transactions, this database becomes a performance bottleneck of the system.
-This hypothesis needs experiments (load testing).
-
 #### Development experience evaluation
 Monitoring, debugging, testing and modification of stream-based solutions definitely more complex comparing to traditional-database-based solutions. 
 Let's see how the development experience for the complex streaming application looks like. 
